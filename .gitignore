@@ -4,21 +4,22 @@
 build/
 dist/
 venv/
-dragnet.egg-info
+.vscode/
+extractnet.egg-info
 
 # IDEs
 .idea/
 
 # cython temporary files
-dragnet/blocks.cpp
-dragnet/blocks.html
-dragnet/lcs.cpp
-dragnet/lcs.html
-dragnet/_weninger.cpp
-dragnet/readability.cpp
-dragnet/features/_readability.cpp
-dragnet/features/_kohlschuetter.cpp
-dragnet/features/_weninger.cpp
+extractnet/blocks.cpp
+extractnet/blocks.html
+extractnet/lcs.cpp
+extractnet/lcs.html
+extractnet/_weninger.cpp
+extractnet/readability.cpp
+extractnet/features/_readability.cpp
+extractnet/features/_kohlschuetter.cpp
+extractnet/features/_weninger.cpp
 
 documents/
 output/

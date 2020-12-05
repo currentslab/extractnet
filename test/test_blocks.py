@@ -4,7 +4,7 @@ import os
 import pytest
 from lxml import etree
 
-from dragnet import blocks
+from extractnet import blocks
 
 
 @pytest.fixture(scope="module")
