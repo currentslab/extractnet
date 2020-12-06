@@ -1,6 +1,5 @@
 from extractnet.blocks import Blockifier, PartialBlock, BlockifyError
 from extractnet import features
-from extractnet.extractor import Extractor
 from extractnet.util import load_pickled_model
 
 _LOADED_MODELS = {}
