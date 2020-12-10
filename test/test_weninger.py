@@ -1,6 +1,6 @@
 import numpy as np
 
-from dragnet.features import _weninger
+from extractnet.features import _weninger
 
 
 def test_weninger_sx_sdx():

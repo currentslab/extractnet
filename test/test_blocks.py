@@ -96,14 +96,14 @@ class TestTagCountPB(object):
         actual_features = [
             (1, 2, 0, 0),
             (2, 0, 0, 2),
-            (2, 0, 1, 3),
-            (2, 0, 0, 3),  # blockquote
+            (1, 0, 1, 3),
+            (1, 0, 0, 4),  # blockquote
+            (2, 0, 0, 3),
             (1, 2, 0, 3),
             (1, 0, 0, 3),
-            (1, 0, 0, 3),
-            (1, 2, 0, 2),  # first comment
-            (2, 0, 1, 4),
-            (1, 1, 0, 3),
+            (1, 0, 0, 3),  # first comment
+            (1, 2, 0, 2),
+            (1, 0, 1, 4),
     #            (3, 0, 1, 0)  # NOTE: this is a bug here.  It's due
                     # to the _tc-1 assumption in the feature extractor
                     # that fails for the last block. (we don't call
@@ -130,7 +130,7 @@ class TestReadabilityBlocks(object):
         blks = blocks.TagCountReadabilityBlockifier.blockify(html2)
         actual = [blk.features['readability_class_weights'] for blk in blks]
         expected = [
-            [(0, 0), (2, 0), (4, 30), (6, 0)], [(7, -25)], [(8, 0)],
+            [(0, 0), (2, 0), (4, 30), (6, 0)], [(7, 0)], [(8, 0)],
             [(9, -20)], [(11, 0)], [(12, 0)], [(13, 5), (14, -5)]
         ]
         assert actual == expected

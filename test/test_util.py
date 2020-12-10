@@ -2,8 +2,8 @@
 
 from sklearn.pipeline import FeatureUnion
 
-from dragnet.features import KohlschuetterFeatures, WeningerFeatures
-from dragnet import util
+from extractnet.features import KohlschuetterFeatures, WeningerFeatures
+from extractnet import util
 
 
 def test_evaluation_metrics():

@@ -28,7 +28,7 @@ NOPRINT_TRANS_TABLE = {
     i: None for i in range(0, sys.maxunicode + 1) if not chr(i).isprintable() and not chr(i) in (' ', '\t', '\n')
 }
 
-def load_html(htmlobject):
+def load_html(htmlobject, encoding='utf-8'):
     """Load object given as input and validate its type
     (accepted: LXML tree, bytestring and string)
     """
@@ -40,7 +40,7 @@ def load_html(htmlobject):
     # try to detect encoding and convert to string
     if isinstance(htmlobject, bytes):
         # test
-        if 'html' not in htmlobject[:50].decode(encoding='ascii', errors='ignore').lower():
+        if 'html' not in htmlobject[:50].decode(encoding=encoding, errors='ignore').lower():
             check_flag = True
         guessed_encoding = detect_encoding(htmlobject)
         if guessed_encoding is not None:
