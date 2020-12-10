@@ -74,7 +74,8 @@ BLACKLIST = {
 
 # tags defining the blocks we'll extract
 cdef cpp_set[string] BLOCKS
-BLOCKS = {b'h1', b'h2', b'h3', b'h4', b'h5', b'h6', b'p', b'div', b'table', b'map', b'span', b'author', b'tag'}
+BLOCKS = {b'h1', b'h2', b'h3', b'h4', b'h5', b'h6', b'p', b'div', b'table',
+     b'map', b'span', b'author', b'tag', b'time', b'a', b'font'}
 
 # define some commonly used strings here, otherwise Cython will always add
 # a little python overhead when using them even though they are constant

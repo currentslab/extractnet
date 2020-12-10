@@ -53,6 +53,8 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
     def __init__(self, blockifier=TagCountReadabilityBlockifier,
                  features=('kohlschuetter', 'weninger', 'readability'),
                  model=None,
+                 css_tokenizer_path='extractnet/models/css_tokenizer.pkl.gz',
+                 text_tokenizer_path='extractnet/models/text_tokenizer.pkl.gz',
                  num_labels=2, prob_threshold=0.5, max_block_weight=200,
                  features_type=None, author_feature_transforms=None):
         self.params = {
@@ -65,12 +67,14 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
 
         self.blockifier = blockifier
         self.features = features
-        css_tokenizer = joblib.load('extractnet/models/css_tokenizer.pkl.gz')
-        text_tokenizer = joblib.load('extractnet/models/text_tokenizer.pkl.gz')
+        css_tokenizer = joblib.load(css_tokenizer_path)
+        text_tokenizer = joblib.load(text_tokenizer_path)
+
         if author_feature_transforms is None:
             author_feature_transforms = AuthorFeatures(css_tokenizer, text_tokenizer,
                     features=('kohlschuetter', 'weninger', 'readability', 'css'),
                 )
+
         self.auth_feat = author_feature_transforms
 
         self.feature_func = [
@@ -113,7 +117,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
 
     @staticmethod
     def validate(labels, block_groups, weights=None):
-        print('validate')
+
         clean_labels, clean_weights, clean_block_groups = [], [], []
         # iterate through all documents
         for idx, label in enumerate(labels):
@@ -131,7 +135,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
         return np.array(clean_labels), np.array(clean_weights), np.array(clean_block_groups)
 
 
-    def fit(self, documents, labels, weights=None):
+    def fit(self, documents, labels, weights=None, init_models=None, **kwargs):
         """
         Fit :class`Extractor` features and model to a training dataset.
 
@@ -162,7 +166,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
 
         labels = np.concatenate(labels)
 
-        author_features_mat = self.auth_feat.fit_transform(
+        complex_feat_mat = self.auth_feat.fit_transform(
                         np.concatenate(block_groups)
                     )
 
@@ -172,12 +176,19 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
 
         for idx, clf in enumerate(self.classifiers):
             print('fit model ', idx)
-            input_feat = author_features_mat if self.features_type[idx] == 0 else features_mat
+            input_feat = complex_feat_mat if self.features_type[idx] == 0 else features_mat
             print(input_feat.shape)
+
+            init_model = None
+            if not(init_models is None) and isinstance(init_models, list):
+                init_model = init_models[idx]
+
             if weights is None:
-                self.classifiers[idx] = clf.fit(input_feat, labels[:, idx])
+                self.classifiers[idx] = clf.fit(input_feat, labels[:, idx], 
+                    init_model=init_model, **kwargs)
             else:
-                self.classifiers[idx] = clf.fit(input_feat, labels[:, idx], sample_weight=weights[:, idx])
+                self.classifiers[idx] = clf.fit(input_feat, labels[:, idx], 
+                    sample_weight=weights[:, idx], init_model=init_model, **kwargs)
 
         return self
 
@@ -206,9 +217,6 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
 
             for attribute_idx in attribute_indexes:
                 labels, weights = self._get_labels_and_weights(attributes, attribute_idx=attribute_idx)
-                if labels.sum() == 0 and attribute_idx not in not_skip_indexes:
-                    skip = True
-                    continue
                 multi_label.append(labels)
                 multi_weights.append(weights)
 
@@ -380,13 +388,15 @@ class CascadeExtractor(BaseEstimator, ClassifierMixin):
         multi_blocks, full_blocks = self.stage1_classifer.extract(html, 
             encoding=encoding, as_blocks=True, return_blocks=True)
 
-        full_content_blocks = multi_blocks[0]
         # str_cast(b'\n'.join(blocks[ind].text for ind in np.flatnonzero(preds)
         results = {
-            'article': str_cast(b'\n'.join([ block.text for block in multi_blocks[1]])),
-            'headlines': str_cast(b'\n'.join([ block.text for block in multi_blocks[2]])),
+            'article': str_cast(b'\n'.join([ block.text for block in multi_blocks[0]])),
+            'headlines': str_cast(b'\n'.join([ block.text for block in multi_blocks[1]])),
+            'description': str_cast(b'\n'.join([ block.text for block in multi_blocks[2]])),
             'bread_crumbs' : [ str_cast(block.text) for block in multi_blocks[3]],
         }
+
+        # full_blocks = multi_blocks[0]
         auth_feature = self.stage1_classifer.auth_feat.transform(full_blocks)
         auth_blocks = self.author_classifier.predict_proba(auth_feature)
         date_blocks = self.date_classifier.predict_proba(auth_feature)
@@ -394,20 +404,19 @@ class CascadeExtractor(BaseEstimator, ClassifierMixin):
         if len(full_blocks) > 3:
             best_index = np.argmax(auth_blocks[:, 1])
             auth_prob = auth_blocks[best_index, 1]
-            print(auth_prob)
-            author_found = False
-            if auth_prob > 0.1:
-                date_found = True
+            if auth_prob > 0.5:
                 results['rawAuthor'] = str_cast(full_blocks[best_index].text)
                 results['author'] = self.extract_author(results['rawAuthor'])
 
         best_index = np.argmax(date_blocks[:, 1])
         date_prob = date_blocks[best_index, 1]
         date_found = False
+
         if date_prob > 0.5:
             date_found = True
             results['rawDate'] = str_cast(full_blocks[best_index].text)
             results['date'] = dateparser.parse(results['rawDate'])
+
         if as_blocks:
             results['raw_blocks'] = multi_blocks
 

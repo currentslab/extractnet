@@ -19,7 +19,7 @@ List of changes from Dragnet :
 
 * ExtractNet is a platform to extract any interesting attributes from any webpage, not just limited to content based article.
 
-* ExtractNet aims to convert unstructured webpage to structured data
+* ExtractNet aims to convert unstructured webpage to structured data without relying hand crafted rules
 
 * ExtractNet do not convert webpage into simplified html
 
@@ -36,7 +36,7 @@ We use the same body extraction benchmark from [article-extraction-benchmark](ht
 | Diffbot  | 0.958 ± 0.009  | 0.944 ± 0.013  | 0.951 ± 0.010  |  0.348 ± 0.035  |
 | boilerpipe  | 0.850 ± 0.016  |  0.870 ± 0.020 | 0.860 ± 0.016  | 0.006 ± 0.006   |
 | dragnet  |  0.925 ± 0.012 | 0.889 ± 0.018  | 0.907 ± 0.014  | 0.221 ± 0.030   |
-| **ExtractNet**  | 0.924 ± 0.012  |  0.939 ± 0.013 | 0.931 ± 0.011  | 0.271 ± 0.032   |
+| **ExtractNet**  | 0.922 ± 0.011  |  0.933 ± 0.013 | 0.927 ± 0.010  | 0.160 ± 0.027  |
 | html-text  | 0.500 ± 0.017  | 0.994 ± 0.001  | 0.665 ± 0.015  |  0.000 ± 0.000  |
 | newspaper  |  0.917 ± 0.013 | 0.906 ± 0.017  | 0.912 ± 0.014  | 0.260 ± 0.032   |
 | readability  | 0.913 ± 0.014   | 0.931 ± 0.015  | 0.922 ± 0.013  | 0.315 ± 0.034   |

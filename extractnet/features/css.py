@@ -17,21 +17,17 @@ class CSSFeatures(BaseEstimator, TransformerMixin):
     # first 'id', then 'class'
     attribute_tokens = (
         ('id',
-         ('nav', 'ss', 'top', 'content', 'link', 'title', 'comment', 'tools', 'tag', 'story_tag',
-         'published', 'date', 'modified', 'time', 'article', 'name', 'body', 'card', 'timestamp',
-          'rating', 'ss', 'breadcrumb', 'keyword', 'author')
-         ),
+          ( 'author', )
+        ),
         ('class',
-         ('menu', 'widget', 'nav', 'share', 'facebook', 'cat', 'top', 'content', 'breadcrumb',
-          'item', 'twitter', 'button', 'title', 'header', 'ss', 'post', 'story_tag', 'tag',
-          'published', 'date', 'modified', 'time', 'article', 'click', 'body', 'card', 'timestamp',
-          'comment', 'meta', 'alt', 'time', 'depth', 'thread', 'author', 'tools', 'keyword', 'keywords',
-          'reply', 'url', 'avatar', 'name')
-         ),
-         ('itemprop', 
-            ('author', 'article', 'body', 'time')
-         )
-        )
+         (
+          'menu', 'widget', 'nav', 'top', 'content', 'breadcrumb', 'block', 'title',
+          'button', 'header', 'ss', 'post', 'tag', 'line', 'foot', 'para', 'link',
+          'published', 'date', 'modif', 'article', 'click', 'body', 'card', 'timestamp',
+          'comment', 'meta', 'alt', 'time', 'depth', 'author', 'tool', 'keyword',
+           'url', 'name', )
+        ),
+    )
 
     def fit(self, blocks, y=None):
         """
