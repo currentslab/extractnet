@@ -115,5 +115,7 @@ setup(
         'dateparser==1.0.0',
         'joblib==0.17.0',
         'catboost==0.24.2',
+        'courlan==0.2.3',
+        'htmldate==0.7.2'
     ]
 )

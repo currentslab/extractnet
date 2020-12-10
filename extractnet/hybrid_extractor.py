@@ -1,39 +1,78 @@
 from .extractor import MultiExtractor
 from .metadata_extraction.metadata import extract_metadata
 from .compat import string_, str_cast, unicode_
+from .util import get_and_union_features, convert_segmentation_to_text
+from .sequence_tagger.models import word2features
 
 from sklearn.base import BaseEstimator
 import joblib
 import numpy as np
+import dateparser
+
+def merge_results(r1, r2):
+    for key in r2.keys():
+        if key not in r1:
+            r1[key] = r2[key]
+        elif isinstance(r1[key], str) and isinstance(r2[key], str):
+            r1[key] = [r1[key], r2[key]]
+        elif isinstance(r1[key], str) and isinstance(r2[key], list):
+            r1[key] = r2[key] + [r1[key]]
+        elif isinstance(r1[key], list) and isinstance(r2[key], str):
+            r1[key] = r1[key] + [r2[key]]
+        elif isinstance(r1[key], list) and isinstance(r2[key], list):
+            r1[key] += r2[key]
+    return r1
 
 class Extractor(BaseEstimator):
 
 
-    def __init__(self, stage1_classifer=None,
-            author_classifier=None, date_classifier=None,
-            author_embeddings= 'extractnet/models/char_embedding.joblib',
-            author_tagger='extractnet/models/crf.joblib'):
+    def __init__(self, 
+            stage1_classifer='extractnet/models/final_extractor.pkl.gz',
+            author_classifier='extractnet/models/author_extractor.pkl.gz', 
+            date_classifier='extractnet/models/datePublishedRaw_extractor.pkl.gz',
+            author_embeddings='extractnet/models/char_embedding.joblib',
+            author_tagger='extractnet/models/crf.joblib', 
+            data_prob_threshold=0.5,
+            author_prob_threshold=0.5,
+            ):
         '''
             For inference use only
         '''
+        self.author_clf = joblib.load(author_classifier)
+        self.date_clf = joblib.load(date_classifier)
+
         if isinstance(stage1_classifer, str):
-            self.stage1_classifer = MultiExtractor.from_pretrained(stage1_classifer)
+            self.stage1_clf = MultiExtractor.from_pretrained(stage1_classifer)
         else:
-            self.stage1_classifer = stage1_classifer
+            self.stage1_clf = stage1_classifer
 
-        stage1_field_mapping = [
-            'full_content',
-            'headline',
-            'description',
-            'breadcrumbs'
-        ]
-
-        self.author_classifier = author_classifier
-        self.date_classifier = date_classifier
+        self.data_prob_threshold = data_prob_threshold
+        self.author_prob_threshold = author_prob_threshold
 
         self.author_embedding = joblib.load(author_embeddings)
         self.author_tagger = joblib.load(author_tagger)
 
+    def post_process(self, results):
+        '''
+        Normalize and tidy some results
+        '''
+        if 'author' in results:
+            results['rawAuthor'] = results['author']
+            results['authorList'] = []
+            if isinstance(results['rawAuthor'], list):
+                for author_txt in results['rawAuthor']:
+                    results['authorList'] += self.extract_author(author_txt)
+            elif isinstance(results['rawAuthor'], str):
+                results['authorList'] = self.extract_author(results['rawAuthor'])
+            if len(results['authorList']) == 0:
+                results['authorList'] = [ results['rawAuthor'] ]
+            results.pop('author')
+
+        if 'date' in results:
+            results['rawDate'] = results['date']
+            results['date'] = dateparser.parse(results['rawDate'])
+
+        return results
 
     def extract(self, documents, 
             extract_content=True,
@@ -69,11 +108,15 @@ class Extractor(BaseEstimator):
         ml_results = self.ml_extract(documents, encoding=encoding, as_blocks=as_blocks, **ml_fallback)
         # we assume the accuracy of meta data is always better than machine learning
         if isinstance(documents, (str, bytes, unicode_, np.unicode_)):
-            ml_results.update(documents_meta_data)
+            ml_results = self.post_process( 
+                merge_results(ml_results, documents_meta_data)
+            )
             return ml_results
         else:
             for idx, meta_data in enumerate(documents_meta_data):
-                ml_results[idx].update(meta_data)
+                ml_results[idx] = self.post_process( 
+                    merge_results(ml_results[idx], meta_data)
+                )
             return ml_results
 
     @staticmethod
@@ -130,7 +173,7 @@ class Extractor(BaseEstimator):
             extract_breadcrumbs=extract_breadcrumbs,
         )
 
-        multi_blocks, full_blocks = self.stage1_classifer.extract(html, 
+        multi_blocks, full_blocks = self.stage1_clf.extract(html, 
             encoding=encoding, as_blocks=True, return_blocks=True, 
             extract_target=extract_target_index)
 
@@ -145,30 +188,30 @@ class Extractor(BaseEstimator):
         # full_blocks = multi_blocks[0]
         auth_feature = None
         if extract_author:
-            auth_feature = self.stage1_classifer.auth_feat.transform(full_blocks)
-            auth_blocks = self.author_classifier.predict_proba(auth_feature)
+            auth_feature = self.stage1_clf.auth_feat.transform(full_blocks)
+            auth_blocks = self.author_clf.predict_proba(auth_feature)
 
             if len(full_blocks) > 3:
                 best_index = np.argmax(auth_blocks[:, 1])
                 auth_prob = auth_blocks[best_index, 1]
-                if auth_prob > 0.5:
-                    results['rawAuthor'] = str_cast(full_blocks[best_index].text)
-                    results['author'] = self.extract_author(results['rawAuthor'])
+                if auth_prob > self.author_prob_threshold:
+                    results['author'] = str_cast(full_blocks[best_index].text)
+                    # results['author'] = self.extract_author(results['rawAuthor'])
 
         if extract_date:
             # reuse if possible
             if auth_feature is None:
-                auth_feature = self.stage1_classifer.auth_feat.transform(full_blocks)
+                auth_feature = self.stage1_clf.auth_feat.transform(full_blocks)
 
-            date_blocks = self.date_classifier.predict_proba(auth_feature)
+            date_blocks = self.date_clf.predict_proba(auth_feature)
             best_index = np.argmax(date_blocks[:, 1])
             date_prob = date_blocks[best_index, 1]
             date_found = False
 
-            if date_prob > 0.5:
+            if date_prob > self.data_prob_threshold:
                 date_found = True
-                results['rawDate'] = str_cast(full_blocks[best_index].text)
-                results['date'] = dateparser.parse(results['rawDate'])
+                results['date'] = str_cast(full_blocks[best_index].text)
+                # results['date'] = dateparser.parse(results['rawDate'])
 
         if as_blocks:
             results['raw_blocks'] = multi_blocks
