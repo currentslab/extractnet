@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2012 SEOmoz
+# Copyright (c) 2020 Pheme Pte Ltd
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
