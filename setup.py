@@ -100,8 +100,17 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    packages=['extractnet', 'extractnet.features'],
-    package_dir={'extractnet': 'extractnet', 'extractnet.features': 'extractnet/features'},
+    packages=[
+        'extractnet', 'extractnet.features', 
+        'extractnet.metadata_extraction', 
+        'extractnet.sequence_tagger',
+        'extractnet.features'
+        ],
+    package_dir={
+        'extractnet': 'extractnet', 
+        'extractnet.metadata_extraction': 'extractnet/metadata_extraction',
+        'extractnet.features': 'extractnet/features',
+        'extractnet.sequence_tagger': 'extractnet/sequence_tagger' },
     package_data={'extractnet': ['pickled_models/*/*', 'models/*']},
     cmdclass={'build_ext': build_ext},
     ext_modules=cythonize(ext_modules),
