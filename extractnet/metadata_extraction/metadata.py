@@ -196,7 +196,15 @@ def examine_meta(tree):
         else:
             if not 'charset' in elem.attrib and not 'http-equiv' in elem.attrib and not 'property' in elem.attrib:
                 LOGGER.debug(html.tostring(elem, pretty_print=False, encoding='unicode').strip())
-    metadata['title'], metadata['author'], metadata['url'], metadata['description'], metadata['sitename'], metadata['tags'] = title, author, url, description, site_name, tags
+    
+    metadata.update({
+        'title': title,
+        'author': author,
+        'url': url, 
+        'description':description, 
+        'site_name': site_name,
+        'tags': tags
+    })
     return metadata
 
 

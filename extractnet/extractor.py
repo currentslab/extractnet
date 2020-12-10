@@ -42,6 +42,15 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
             If ``prob_threshold`` is not None, then ``model`` must implement the
                 ``predict_proba()`` method.
     """
+
+    FIELD_INDEX = {
+        'content': 0,
+        'description': 1,
+        'headlines': 2,
+        'breadcrumbs': 3
+    }
+    INVERTED_INDEX = { value: key for key, value in MultiExtractor.FIELD_INDEX.items() }
+
     def state_dict(self):
 
         return {
