@@ -4,16 +4,20 @@ ExtractNet
 
 Based on the popular content extraction package [Dragnet](https://github.com/dragnet-org/dragnet/), ExtractNet extend the machine learning approach to extract other attributes such as date, author and keywords from news article. 
 
+## Why don't just use existing rule-base extraction method:
 
-List of changes from Dragnet :
+We discover some webpage doesn't provide the real author name but simply populate the author tag with a default value.
 
-* Underlying classifier is replaced by [Catboost](https://catboost.ai/) instead of [Decision Tree](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html) for all attributes extraction for consistency and performance boost.
+For example [ltn.com.tw](https://news.ltn.com.tw) always populate the same author value for each news article while the real author is within the content first paragraph.
 
-* Updated CSS features, added text+css latent feature 
+```
+<meta property="dable:author" content="自由時報"> <-- incorrect author name
+...
+<p>〔記者錢利忠／台北報導〕台北地檢署偵辦勞動基金炒股案，今發動第3波行動，兵分5路搜索證券商復華投信，約談復華投信投資長邱明強、研究員劉建賢、先前以證人請回的寶佳資產執行長唐楚烈、已獲30萬元交保的寶佳投資主管邱裕元等4人；又以唐楚烈今天被約談後，已從證人改列被告，最受矚目。</p> <-- the correct author name should be 錢利忠
+```
 
-* Includes a CRF model that extract names from author block text.
+ExtractNet use machine learning approach to extract these relevant data through visible section of the webpage just like a human.
 
-* (Coming soon) ExtractNet parse [json+ld](https://json-ld.org/) for any related attributes
 
 ## What ExtractNet is and isn't
 
@@ -42,10 +46,16 @@ We use the same body extraction benchmark from [article-extraction-benchmark](ht
 | readability  | 0.913 ± 0.014   | 0.931 ± 0.015  | 0.922 ± 0.013  | 0.315 ± 0.034   |
 | trafilatura  | 0.930 ± 0.010  | 0.967 ± 0.009  | 0.948 ± 0.008   | 0.243 ± 0.031   |
 
+## List of changes from Dragnet
+
+* Underlying classifier is replaced by [Catboost](https://catboost.ai/) instead of [Decision Tree](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.ExtraTreesClassifier.html) for all attributes extraction for consistency and performance boost.
+
+* Updated CSS features, added text+css latent feature 
+
+* Includes a CRF model that extract names from author block text.
 
 
-
-# GETTING STARTED
+## GETTING STARTED
 
 ```
 git clone https://github.com/currentsapi/extractnet

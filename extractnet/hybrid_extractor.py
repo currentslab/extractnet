@@ -1,8 +1,12 @@
 from .extractor import MultiExtractor
-from sklearn.base import BaseEstimator
 from .metadata_extraction.metadata import extract_metadata
+from .compat import string_, str_cast, unicode_
 
-class CascadeExtractor(BaseEstimator):
+from sklearn.base import BaseEstimator
+import joblib
+import numpy as np
+
+class Extractor(BaseEstimator):
 
 
     def __init__(self, stage1_classifer=None,
@@ -24,7 +28,6 @@ class CascadeExtractor(BaseEstimator):
             'breadcrumbs'
         ]
 
-
         self.author_classifier = author_classifier
         self.date_classifier = date_classifier
 
@@ -35,12 +38,11 @@ class CascadeExtractor(BaseEstimator):
     def extract(self, documents, 
             extract_content=True,
             extract_headlines=True,
-            encoding=None, 
+            encoding='utf-8', 
             as_blocks=False, 
-            debug=False, 
             metadata_mining=True
         ):
-        
+
         ml_fallback = {
             'extract_content': extract_content,
             'extract_headlines': extract_headlines,
@@ -51,39 +53,45 @@ class CascadeExtractor(BaseEstimator):
         }
 
         if isinstance(documents, (str, bytes, unicode_, np.unicode_)):
+            documents_meta_data = {}
             if metadata_mining:
-                documents_meta_data, meta_ml_fallback = extract_one_meta(documents)
+                documents_meta_data, meta_ml_fallback = self.extract_one_meta(documents)
                 ml_fallback.update(meta_ml_fallback)
         else:
             documents_meta_data = []
-            for document in documents:
-                document_meta_data, meta_ml_fallback = extract_one_meta(document)
-                ml_fallback.update(meta_ml_fallback)
+            if metadata_mining:
+                for document in documents:
+                    document_meta_data, meta_ml_fallback = self.extract_one_meta(document)
+                    ml_fallback.update(meta_ml_fallback)
+            else:
+                documents_meta_data = [{}] * len(documents)
 
-        ml_results = ml_extract(documents, encoding=encoding, as_blocks=as_blocks, debug=debug, **ml_fallback)
+        ml_results = self.ml_extract(documents, encoding=encoding, as_blocks=as_blocks, **ml_fallback)
         # we assume the accuracy of meta data is always better than machine learning
         if isinstance(documents, (str, bytes, unicode_, np.unicode_)):
             ml_results.update(documents_meta_data)
-            return ml_results 
+            return ml_results
         else:
             for idx, meta_data in enumerate(documents_meta_data):
                 ml_results[idx].update(meta_data)
             return ml_results
 
-    def extract_one_meta(self, document):
+    @staticmethod
+    def extract_one_meta(document):
         ml_fallback = {}
-        meta_data = extract_metadata(documents)
+        meta_data = extract_metadata(document)
         if 'author' not in meta_data:
-            ml_fallback['extract_author'] = True        
+            ml_fallback['extract_author'] = True
         if 'description' not in meta_data:
             ml_fallback['extract_description'] = True
         if 'tags' not in meta_data:
             ml_fallback['extract_breadcrumbs'] = True
         if 'date' not in meta_data:
             ml_fallback['extract_date'] = True
+
         return meta_data, ml_fallback
 
-
+    @staticmethod
     def format_index_feature(
             extract_content=True,
             extract_headlines=True,
@@ -99,19 +107,20 @@ class CascadeExtractor(BaseEstimator):
 
         extract_target_index = sorted([ index for _, index in extract_index.items() if index is not None ])
 
-        target_order = [ (order_idx, MultiExtractor.INVERTED_INDEX[field_idx])  ) \
+        target_order = [ (order_idx, MultiExtractor.INVERTED_INDEX[field_idx])  \
             for order_idx, field_idx in enumerate(extract_target_index) ]
 
         return extract_target_index, target_order
 
 
-    def ml_extract(self, html, encoding=None, as_blocks=False,
+    def ml_extract(self, html, as_blocks=False,
             extract_content=True,
             extract_author=True,
             extract_breadcrumbs=True,
             extract_headlines=True,
             extract_description=True,
             extract_date=True,
+            encoding='utf-8',
             ):
 
         extract_target_index, target_order = self.format_index_feature(
@@ -145,6 +154,7 @@ class CascadeExtractor(BaseEstimator):
                 if auth_prob > 0.5:
                     results['rawAuthor'] = str_cast(full_blocks[best_index].text)
                     results['author'] = self.extract_author(results['rawAuthor'])
+
         if extract_date:
             # reuse if possible
             if auth_feature is None:
@@ -162,11 +172,6 @@ class CascadeExtractor(BaseEstimator):
 
         if as_blocks:
             results['raw_blocks'] = multi_blocks
-
-        if debug:
-            results['all_blocks'] = full_blocks
-            results['full_content_blocks'] = full_content_blocks
-            results['author_prob'] = auth_blocks
 
         return results
 

@@ -4,8 +4,8 @@ import os
 
 import numpy as np
 
-from dragnet.blocks import TagCountReadabilityBlockifier
-from dragnet.features import _readability
+from extractnet.blocks import TagCountReadabilityBlockifier
+from extractnet.features import _readability
 
 FIXTURES = os.path.join('test', 'datafiles')
 

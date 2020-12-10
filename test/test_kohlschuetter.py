@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 from lxml import etree
 
-from dragnet import Blockifier, BlockifyError
-from dragnet.features import KohlschuetterFeatures
-from dragnet.compat import range_, str_cast
+from extractnet import Blockifier, BlockifyError
+from extractnet.features import KohlschuetterFeatures
+from extractnet.compat import range_, str_cast
 
 
 @pytest.fixture(scope="module")
@@ -89,6 +89,7 @@ class TestBlockifier(object):
                     <b>bold stuff</b> after the script
                </div>"""
         blocks = Blockifier.blockify(s, parse_callback=self.count_divs)
+        print(TestBlockifier.div_count)
         assert self.div_count == 2
 
     def test_simple_two_blocks(self):

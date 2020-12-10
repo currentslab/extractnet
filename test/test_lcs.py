@@ -1,4 +1,4 @@
-from dragnet.lcs import check_inclusion
+from extractnet.lcs import check_inclusion
 
 
 def test_check_inclusion():

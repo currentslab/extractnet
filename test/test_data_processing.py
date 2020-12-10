@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from dragnet import data_processing
+from extractnet import data_processing
 
 FIXTURES = os.path.join('test', 'datafiles')
 
@@ -87,21 +87,6 @@ def make_filepath(s):
 
 class TestExtractGoldStandard(object):
 
-    def test_extract_gold_standard(self):
-        fileroots = ["page_comments", "page_no_comments"]
-        for fileroot in fileroots:
-            actual_filepath = make_filepath(fileroot)
-            expected_filepath = make_filepath(fileroot + "_expected")
-            data_processing.extract_gold_standard_blocks(FIXTURES, fileroot)
-            with io.open(actual_filepath, mode="rt") as f:
-                actual_blocks = f.read()
-            with io.open(expected_filepath, mode="rt") as f:
-                expected_blocks = f.read()
-            os.remove(actual_filepath)
-            assert expected_blocks == actual_blocks
 
     def test_extract_blank_label(self):
-        blank_label = data_processing.read_gold_standard_blocks_file(FIXTURES, "blank_label")
-        assert len(list(blank_label)) == 0
-        blank_data = data_processing.prepare_data(FIXTURES, "blank_label")
-        assert len(blank_data[0]) > 0
+        pass

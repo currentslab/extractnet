@@ -49,7 +49,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
         'headlines': 2,
         'breadcrumbs': 3
     }
-    INVERTED_INDEX = { value: key for key, value in MultiExtractor.FIELD_INDEX.items() }
+    INVERTED_INDEX = { value: key for key, value in FIELD_INDEX.items() }
 
     def state_dict(self):
 
@@ -265,7 +265,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
 
         return labels, weights
 
-    def extract(self, html, encoding=None, as_blocks=False, extract_target=None, return_blocks=False):
+    def extract(self, html, encoding='utf-8', as_blocks=False, extract_target=None, return_blocks=False):
         """
         Extract the main content and/or comments from an HTML document and
         return it as a string or as a sequence of block objects.
@@ -310,7 +310,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
             return np.concatenate([self._predict_one(doc, **kwargs) for doc in documents])
 
 
-    def _predict_one(self, document, encoding=None, return_blocks=False, extract_target=None):
+    def _predict_one(self, document, encoding='utf-8', return_blocks=False, extract_target=None):
         """
         Predict class (content=1 or not-content=0) of each block in an HTML
         document.
