@@ -66,13 +66,7 @@ python setup.py install
 Code
 ```
 from extractnet.extractor import CascadeExtractor
-import requests
-import joblib
 
-auth_clf = joblib.load('extractnet/models/author_extractor.pkl.gz')
-date_clf = joblib.load('extractnet/models/datePublishedRaw_extractor.pkl.gz')
-cascade_clf = CascadeExtractor('extractnet/models/final_extractor.pkl.gz', 
-                                auth_clf, date_clf)
 raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
 results = cascade_clf.extract(raw_html, encoding='utf-8', as_blocks=False, extract_target=[1], debug=False)
 for key, value in results.items():

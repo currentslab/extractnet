@@ -3,7 +3,7 @@ import json
 import re
 import numpy as np
 
-NON_WORD_CHAR = re.compile(r"[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。|/|｜|】|【|」|／|「]")
+NON_WORD_CHAR = re.compile(r'[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。| |  |/|｜|】|【|」| 》|>|<|《|;|；|：|」|"|\'|／|「]')
 
 def word2features(sent, i, embeddings):
     word = sent[i]
@@ -15,11 +15,12 @@ def word2features(sent, i, embeddings):
         'word.istitle()': word.istitle(),
         'trigram': ''.join(sent[ i-1:i+2 ]).lower(),
         'bigram': ''.join(sent[ i-1:i+1 ]).lower(),
-        'bigram1': ''.join(sent[ i:i+2 ]).lower(),
-        'trigram2': ''.join(sent[ i:i+3 ]).lower(),
+        'tribigram': ''.join(sent[ i:i+3 ]).lower(),
+        'pentagram': ''.join(sent[ i:i+5 ]).lower(),
         'word.isspace()': word.isspace(),
         'word.issymbol()': NON_WORD_CHAR.match(word) is None,
         'word.isdigit()': word.isdigit(),
+        'position_idx': i
     }
 
     if word not in embeddings:
@@ -114,8 +115,9 @@ class NameExtractor():
 if __name__ == '__main__':
     print('start')
     extractor = NameExtractor('extractnet/models/char_embedding.joblib', 'extractnet/models/crf.joblib')
-    print(word2features('文／記者劉讖語', 2, extractor.embedding))
+    for idx in range(5):
+        print(word2features('文／記者劉讖語', idx, extractor.embedding))
 
-    print(extractor.predict('文／記者劉讖語'))
-    print(extractor.predict('By Sarah Mervoshy and Lucy Tompkins'))
-    print(extractor.predict('By Sarah Mervoshy'))
+    # print(extractor.predict('文／記者劉讖語'))
+    # print(extractor.predict('By Sarah Mervosh and Lucy Tompkins'))
+    # print(extractor.predict('By Sarah Mervosh'))

@@ -10,6 +10,7 @@ import numpy as np
 import dateparser
 
 def merge_results(r1, r2):
+
     for key in r2.keys():
         if key not in r1:
             r1[key] = r2[key]
@@ -21,6 +22,12 @@ def merge_results(r1, r2):
             r1[key] = r1[key] + [r2[key]]
         elif isinstance(r1[key], list) and isinstance(r2[key], list):
             r1[key] += r2[key]
+    return r1
+
+def remove_empty_keys(r1):
+    for key in list(r1.keys()):
+        if r1[key] is None:
+            r1.pop(key)
     return r1
 
 class Extractor(BaseEstimator):
@@ -123,15 +130,16 @@ class Extractor(BaseEstimator):
     def extract_one_meta(document):
         ml_fallback = {}
         meta_data = extract_metadata(document)
-        if 'author' not in meta_data:
-            ml_fallback['extract_author'] = True
-        if 'description' not in meta_data:
-            ml_fallback['extract_description'] = True
-        if 'tags' not in meta_data:
-            ml_fallback['extract_breadcrumbs'] = True
-        if 'date' not in meta_data:
-            ml_fallback['extract_date'] = True
+        meta_data = remove_empty_keys(meta_data)
 
+        if 'author' not in meta_data or (meta_data['author'] is None):
+            ml_fallback['extract_author'] = True
+        if 'description' not in meta_data  or (meta_data['description'] is None):
+            ml_fallback['extract_description'] = True
+        if 'tags' not in meta_data  or (meta_data['tags'] is None):
+            ml_fallback['extract_breadcrumbs'] = True
+        if 'date' not in meta_data  or (meta_data['date'] is None):
+            ml_fallback['extract_date'] = True
         return meta_data, ml_fallback
 
     @staticmethod
