@@ -28,6 +28,15 @@ NOPRINT_TRANS_TABLE = {
     i: None for i in range(0, sys.maxunicode + 1) if not chr(i).isprintable() and not chr(i) in (' ', '\t', '\n')
 }
 
+
+SPLIT_TOKENS = re.compile(r'[,|、]')
+
+def re_xpath(self, path):
+    return self.xpath(path, namespaces={
+        're': 'http://exslt.org/regular-expressions'})
+html.HtmlElement.re_xpath = re_xpath
+
+
 def load_html(htmlobject, encoding='utf-8'):
     """Load object given as input and validate its type
     (accepted: LXML tree, bytestring and string)
@@ -83,6 +92,20 @@ def load_html(htmlobject, encoding='utf-8'):
     #        # more robust parsing
     #        tree = fromsoup(htmlobject)
     return tree
+
+
+
+def split_tags(string):
+    if len(string) <= 1:
+        return [string]
+    match_token = SPLIT_TOKENS.search(string)
+    try:
+        if match_token is not None:
+            split_token = match_token.group(0)
+            return string.split(split_token)
+    except TypeError:
+        return [string]
+    return [string]
 
 @lru_cache(maxsize=128)
 def trim(string):

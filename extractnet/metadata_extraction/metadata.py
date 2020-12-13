@@ -16,9 +16,9 @@ from courlan.core import extract_domain
 from courlan.filters import validate_url
 from htmldate import find_date
 from lxml import html
-
+import itertools
 from .metaxpaths import author_xpaths, categories_xpaths, tags_xpaths, title_xpaths
-from .utils import load_html, trim
+from .utils import load_html, trim, split_tags
 
 
 LOGGER = logging.getLogger(__name__)
@@ -35,6 +35,9 @@ JSON_PUBLISHER = re.compile(r'"publisher":[^}]+?"name?\\?": ?\\?"([^"\\]+)', re.
 JSON_CATEGORY = re.compile(r'"articleSection": ?"([^"\\]+)', re.DOTALL)
 JSON_NAME = re.compile(r'"@type":"[Aa]rticle", ?"name": ?"([^"\\]+)', re.DOTALL)
 JSON_HEADLINE = re.compile(r'"headline": ?"([^"\\]+)', re.DOTALL)
+
+TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', '記者[^ ]*／[^ ]*報導〕' ]
+
 URL_COMP_CHECK = re.compile(r'https?://|/')
 
 
@@ -75,7 +78,7 @@ def extract_json(tree, metadata):
         if '"articleSection"' in elem.text:
             mymatch = JSON_CATEGORY.search(elem.text)
             if mymatch:
-                metadata['categories'] = [trim(mymatch.group(1))]
+                metadata['categories'] = split_tags(trim(mymatch.group(1)))
         # try to extract title
         if '"name"' in elem.text and metadata['title'] is None:
             mymatch = JSON_NAME.search(elem.text)
@@ -197,13 +200,15 @@ def examine_meta(tree):
             if not 'charset' in elem.attrib and not 'http-equiv' in elem.attrib and not 'property' in elem.attrib:
                 LOGGER.debug(html.tostring(elem, pretty_print=False, encoding='unicode').strip())
     
+    tags_ = list(itertools.chain.from_iterable([split_tags(t) for t in tags]))
+
     metadata.update({
         'title': title,
         'author': author,
         'url': url, 
         'description':description, 
         'site_name': site_name,
-        'tags': tags
+        'tags': tags_
     })
     return metadata
 
@@ -265,6 +270,14 @@ def extract_author(tree):
         author = re.sub(r'\d.+?$', '', author)
         author = re.sub(r'[^\w]+$|( am| on)', '', trim(author))
         author = author.title()
+    if author is None:
+        for text_author_pattern in TEXT_AUTHOR_PATTERNS:
+            matches = tree.re_xpath("//*[re:match( text(), '{}' )]".format(text_author_pattern))
+            if len(matches) > 0:
+                match_text = matches[0].text
+                author = re.search(text_author_pattern, match_text).group(0)
+                break
+
     return author
 
 
@@ -342,7 +355,8 @@ def extract_catstags(metatype, tree):
         element = tree.find('.//head//meta[@property="article:section"]')
         if element is not None:
             results.append(element.attrib['content'])
-    return [trim(x) for x in results if x is not None]
+    tags = list(itertools.chain.from_iterable([split_tags(trim(x)) for x in results if x is not None]))
+    return tags
 
 
 def extract_metadata(filecontent, default_url=None, date_config=None):
