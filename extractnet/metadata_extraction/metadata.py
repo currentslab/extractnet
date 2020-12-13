@@ -36,7 +36,7 @@ JSON_CATEGORY = re.compile(r'"articleSection": ?"([^"\\]+)', re.DOTALL)
 JSON_NAME = re.compile(r'"@type":"[Aa]rticle", ?"name": ?"([^"\\]+)', re.DOTALL)
 JSON_HEADLINE = re.compile(r'"headline": ?"([^"\\]+)', re.DOTALL)
 
-TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', '記者[^ ]*／[^ ]*報導〕' ]
+TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', '記者[^ ]*／[^ ]*報導〕', '記者[^ ]*日電〕', '文／[^ ]* ' ]
 
 URL_COMP_CHECK = re.compile(r'https?://|/')
 
