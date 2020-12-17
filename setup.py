@@ -117,7 +117,7 @@ setup(
         'Cython>=0.21.1',
         'ftfy>=4.1.0,<5.0.0',
         'lxml',
-        'numpy>=1.11.0',
+        'numpy>=1.19.0',
         'scikit-learn>=0.22.0',
         'scipy>=0.17.0',
         'sklearn-crfsuite==0.3.6',

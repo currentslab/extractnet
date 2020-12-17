@@ -3,6 +3,9 @@ import logging
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.ensemble import ExtraTreesClassifier
+import os
+import dateparser
+import joblib
 
 from .compat import string_, str_cast, unicode_
 from .util import get_and_union_features, convert_segmentation_to_text
@@ -10,10 +13,9 @@ from .blocks import TagCountReadabilityBlockifier
 from .features.author import AuthorFeatures
 from .sequence_tagger.models import word2features
 
-import dateparser
-import joblib
-
 from sklearn.base import clone
+
+BASE_EXTRACTOR_DIR = __file__.replace('/extractor.py','')
 
 class MultiExtractor(BaseEstimator, ClassifierMixin):
     """
@@ -62,10 +64,15 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
     def __init__(self, blockifier=TagCountReadabilityBlockifier,
                  features=('kohlschuetter', 'weninger', 'readability'),
                  model=None,
-                 css_tokenizer_path='extractnet/models/css_tokenizer.pkl.gz',
-                 text_tokenizer_path='extractnet/models/text_tokenizer.pkl.gz',
+                 css_tokenizer_path=None,
+                 text_tokenizer_path=None,
                  num_labels=2, prob_threshold=0.5, max_block_weight=200,
                  features_type=None, author_feature_transforms=None):
+        if css_tokenizer_path is None:
+            css_tokenizer_path = os.path.join(BASE_EXTRACTOR_DIR, 'models/css_tokenizer.pkl.gz')
+        if text_tokenizer_path is None:
+            text_tokenizer_path = os.path.join(BASE_EXTRACTOR_DIR, 'models/text_tokenizer.pkl.gz')
+
         self.params = {
             'features': features,
             'num_labels': num_labels,
