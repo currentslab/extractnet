@@ -18,6 +18,7 @@ from htmldate import find_date
 from lxml import html
 import itertools
 from .metaxpaths import author_xpaths, categories_xpaths, tags_xpaths, title_xpaths
+from .video import get_advance_fields
 from .utils import load_html, trim, split_tags
 
 
@@ -367,6 +368,15 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
         return None
     # initialize dict and try to strip meta tags
     metadata = examine_meta(tree)
+
+    advance_fields = get_advance_fields(filecontent)
+    if advance_fields:
+        for field in ['audio', 'video']:
+            if field in advance_fields:
+                metadata[field] = advance_fields[field]
+            else:
+                metadata[field] = None
+
     # correction: author not a name
     if metadata['author'] is not None:
         if ' ' not in metadata['author'] or metadata['author'].startswith('http'):

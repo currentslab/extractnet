@@ -12,6 +12,11 @@ import socket
 import sys
 from lxml import etree, html
 from functools import lru_cache
+import urllib
+import urllib.parse
+import json
+import urllib.request
+from bs4 import BeautifulSoup as bs
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,6 +33,20 @@ NOPRINT_TRANS_TABLE = {
     i: None for i in range(0, sys.maxunicode + 1) if not chr(i).isprintable() and not chr(i) in (' ', '\t', '\n')
 }
 
+# Check https://regex101.com/r/A326u1/5 for reference
+DOMAIN_FORMAT = re.compile(
+	r"(?:^(\w{1,255}):(.{1,255})@|^)" # http basic authentication [optional]
+	r"(?:(?:(?=\S{0,253}(?:$|:))" # check full domain length to be less than or equal to 253 (starting after http basic auth, stopping before port)
+	r"((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+" # check for at least one subdomain (maximum length per subdomain: 63 characters), dashes in between allowed
+	r"(?:[a-z0-9]{1,63})))" # check for top level domain, no dashes allowed
+	r"|localhost)" # accept also "localhost" only
+	r"(:\d{1,5})?", # port [optional]
+	re.IGNORECASE
+)
+SCHEME_FORMAT = re.compile(
+	r"^(http|hxxp|ftp|fxp)s?$", # scheme: http(s) or ftp(s)
+	re.IGNORECASE
+)
 
 SPLIT_TOKENS = re.compile(r'[,|、]')
 
@@ -115,3 +134,63 @@ def trim(string):
         return SPACE_TRIMMING.sub(r' ', NO_TAG_SPACE.sub(r' ', string)).strip(' \t\n\r\v')
     except TypeError:
         return None
+
+
+
+
+def get_raw_html(url, cookie=None, headers_={}, params=None, lib='requests'):
+	headers = {
+		'Accept': "text/plain, */*; q=0.01",
+		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36',
+		'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36',
+		'cache-control': "no-cache",
+		"sec-fetch-user": "?1",
+		'sec-fetch-dest': 'document',
+		'sec-fetch-site': 'same-origin',
+		'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8',
+	}
+	if len(headers_) > 0:
+		for key, value in headers_.items():
+			headers[key] = value
+
+	if type(cookie) == 'str':
+		headers['cookie'] = cookie
+
+	if params is not None:
+		data = urllib.parse.urlencode(params)
+		data = data.encode('ascii')
+	else:
+		data = None
+	req = urllib.request.Request(url, data, headers)
+	with urllib.request.urlopen(req) as response:
+		raw_html = response.read()
+		return raw_html.decode('UTF-8')
+
+def parse_server_side_render(raw_html):
+	if '<script type="application/ld+json">' in raw_html:
+		return json.loads(raw_html.split('<script type="application/ld+json">', maxsplit=1)[1].split('</script>')[0].replace('//,',','),strict=False)
+	return {}
+
+
+def parse_ld_json(raw_html):
+	results = []
+	if '<script type="application/ld+json">' in raw_html:
+		soup = bs(raw_html, 'lxml')
+		for script_tag in soup.findAll('script', {'type': 'application/ld+json'}):
+			json_string = script_tag.string
+			if json_string and '@context' in json_string:
+				payload = json.loads(json_string)
+				if isinstance(payload, list):
+					for load in payload:
+						results.append(load)
+				else:
+					results.append(payload)
+					if '@graph' in results[-1]:
+						graph = results[-1]['@graph']
+						if isinstance(graph, list):
+							for load in graph:
+								results.append(load)
+						else:
+							results.append(graph)
+
+	return results
