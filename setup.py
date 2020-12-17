@@ -74,7 +74,7 @@ ext_modules = [
 
 setup(
     name='extractnet',
-    version='1.0.0',
+    version='1.0.1',
     description='Extract the main article content (and optionally comments) from a web page',
     author='Ray',
     author_email='zhirui.tam@currentsapi.services',
@@ -113,6 +113,7 @@ setup(
     cmdclass={'build_ext': build_ext},
     ext_modules=cythonize(ext_modules),
     install_requires=[
+        'beautifulsoup4==4.9.3',
         'Cython>=0.21.1',
         'ftfy>=4.1.0,<5.0.0',
         'lxml',

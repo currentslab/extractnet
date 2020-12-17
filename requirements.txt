@@ -9,3 +9,4 @@ dateparser==1.0.0
 joblib==0.17.0
 catboost==0.24.2
 joblib==0.17.0
+beautifulsoup4==4.9.3
