@@ -4,10 +4,13 @@ from .compat import string_, str_cast, unicode_
 from .util import get_and_union_features, convert_segmentation_to_text
 from .sequence_tagger.models import word2features
 
+import os
 from sklearn.base import BaseEstimator
 import joblib
 import numpy as np
 import dateparser
+
+EXTRACTOR_DIR = __file__.replace('/hybrid_extractor.py','')
 
 def merge_results(r1, r2):
 
@@ -34,17 +37,33 @@ class Extractor(BaseEstimator):
 
 
     def __init__(self, 
-            stage1_classifer='extractnet/models/final_extractor.pkl.gz',
-            author_classifier='extractnet/models/author_extractor.pkl.gz', 
-            date_classifier='extractnet/models/datePublishedRaw_extractor.pkl.gz',
-            author_embeddings='extractnet/models/char_embedding.joblib',
-            author_tagger='extractnet/models/crf.joblib', 
+            stage1_classifer=None,
+            author_classifier=None, 
+            date_classifier=None,
+            author_embeddings=None,
+            author_tagger=None, 
             data_prob_threshold=0.5,
             author_prob_threshold=0.5,
             ):
         '''
             For inference use only
         '''
+        if stage1_classifer is None:
+            stage1_classifer = os.path.join(EXTRACTOR_DIR, 'models/final_extractor.pkl.gz')
+        if author_classifier is None:
+            author_classifier = os.path.join(EXTRACTOR_DIR, 'models/author_extractor.pkl.gz')
+
+        if date_classifier is None:
+            date_classifier = os.path.join(EXTRACTOR_DIR, 'models/datePublishedRaw_extractor.pkl.gz')
+        
+        if author_embeddings is None:
+            author_embeddings = os.path.join(EXTRACTOR_DIR, 'models/char_embedding.joblib')
+        
+        if author_tagger is None:
+            author_tagger = os.path.join(EXTRACTOR_DIR, 'models/crf.joblib')
+
+
+
         self.author_clf = joblib.load(author_classifier)
         self.date_clf = joblib.load(date_classifier)
 
