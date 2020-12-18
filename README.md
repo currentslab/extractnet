@@ -12,15 +12,11 @@ Based on the popular content extraction package [Dragnet](https://github.com/dra
 
 We discover some webpage doesn't provide the real author name but simply populate the author tag with a default value.
 
-For example [ltn.com.tw](https://news.ltn.com.tw) always populate the same author value for each news article while the real author is within the content first paragraph.
+For example [ltn.com.tw](https://news.ltn.com.tw), [udn.com](https://udn.com/news/story/7205/5037493) always populate the same author value for each news article while the real author can only be found within the content.
 
-```
-<meta property="dable:author" content="自由時報"> <-- incorrect author name
-...
-<p>〔記者錢利忠／台北報導〕台北地檢署偵辦勞動基金炒股案，今發動第3波行動，兵分5路搜索證券商復華投信，約談復華投信投資長邱明強、研究員劉建賢、先前以證人請回的寶佳資產執行長唐楚烈、已獲30萬元交保的寶佳投資主管邱裕元等4人；又以唐楚烈今天被約談後，已從證人改列被告，最受矚目。</p> <-- the correct author name should be 錢利忠
-```
+![Our machine learnig first approach extract correct fields just like human reading a website](docs/source/_images/extraction-example.jpg)
 
-ExtractNet use machine learning approach to extract these relevant data through visible section of the webpage just like a human.
+ExtractNet uses machine learning approach to extract these relevant data through visible section of the webpage just like a human.
 
 
 ## What ExtractNet is and isn't
