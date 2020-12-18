@@ -4,6 +4,10 @@ ExtractNet
 
 Based on the popular content extraction package [Dragnet](https://github.com/dragnet-org/dragnet/), ExtractNet extend the machine learning approach to extract other attributes such as date, author and keywords from news article. 
 
+
+![ExtractNet pipeline](docs/source/_images/extractnet-pipeline.jpg)
+
+
 ## Why don't just use existing rule-base extraction method:
 
 We discover some webpage doesn't provide the real author name but simply populate the author tag with a default value.
