@@ -340,7 +340,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
             features = self.features.transform(blocks)
             input_feat = [self.auth_feat.transform(blocks, encoding=encoding), features]
             # features = np.concatenate([features, auth_feat], -1)
-        except KeyError: # Can't make features, predict no content
+        except (KeyError, ValueError): # Can't make features, predict no content
             preds = np.zeros((len(blocks)))
         # make predictions
         else:
