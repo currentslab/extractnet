@@ -30,14 +30,20 @@ METADATA_LIST = ['title', 'author', 'url', 'hostname', 'description', 'sitename'
 HTMLDATE_CONFIG = {'extensive_search': False, 'original_date': True}
 
 TITLE_REGEX = re.compile(r'(.+)?\s+[-|]\s+.*$')
-JSON_AUTHOR_1 = re.compile(r'"author":[^}[]+?"name?\\?": ?\\?"([^"\\]+)|"author"[^}[]+?"names?".+?"([^"]+)', re.DOTALL)
+JSON_AUTHOR_1 = re.compile(r'"author":[^}[]+?"name?\\?": ?\\?"([^"\\]+)|"author"[^}[]+?"names?".+?"([^"]+)|"author": ?\\?"([^"\\]+)"', re.DOTALL)
 JSON_AUTHOR_2 = re.compile(r'"[Pp]erson"[^}]+?"names?".+?"([^"]+)', re.DOTALL)
+JSON_AUTHOR_3 = re.compile(r'"author": ?\\?"([^"\\]+)"')
+
 JSON_PUBLISHER = re.compile(r'"publisher":[^}]+?"name?\\?": ?\\?"([^"\\]+)', re.DOTALL)
 JSON_CATEGORY = re.compile(r'"articleSection": ?"([^"\\]+)', re.DOTALL)
 JSON_NAME = re.compile(r'"@type":"[Aa]rticle", ?"name": ?"([^"\\]+)', re.DOTALL)
 JSON_HEADLINE = re.compile(r'"headline": ?"([^"\\]+)', re.DOTALL)
 
-TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', '記者[^ ]*／[^ ]*報導〕', '記者[^ ]*日電〕', '文／[^ ]* ' ]
+TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', 
+    '記者[^ ]*／[^ ]*報導〕', '記者[^ ]*日電〕', 
+    '文／[^ ]* ', '記者[^ ]*／[^ ]*報導', 
+    '／記者[^ ]*報導', '記者[^ ]*／[^ ]*報導',
+    '【[^ ]*專欄】', '【[^ ]*快報[^ ]*】', '【[^ ]*／[^ ]*】' ]
 
 URL_COMP_CHECK = re.compile(r'https?://|/')
 
@@ -47,8 +53,9 @@ def extract_json_author(elemtext, regular_expression):
     '''Crudely extract author names from JSON-LD data'''
     json_authors = list()
     mymatch = regular_expression.search(elemtext)
+
     while mymatch is not None:
-        if mymatch.group(1) and ' ' in mymatch.group(1):
+        if mymatch.group(1):
             json_authors.append(trim(mymatch.group(1)))
             elemtext = regular_expression.sub(r'', elemtext, count=1)
             mymatch = regular_expression.search(elemtext)
@@ -66,10 +73,13 @@ def extract_json(tree, metadata):
         if not elem.text:
             continue
         # author info
-        if '"author":' in elem.text:
-            metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_1)
-            if metadata['author'] is None:
-                metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_2)
+        if 'author' not in metadata or metadata['author'] is None:
+            if '"author":' in elem.text:
+                metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_1)
+                if metadata['author'] is None:
+                    metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_2)
+                if metadata['author'] is None:
+                    metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_3)
         # try to extract publisher
         if '"publisher"' in elem.text:
             mymatch = JSON_PUBLISHER.search(elem.text)
@@ -376,10 +386,13 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
                 metadata[field] = advance_fields[field]
             else:
                 metadata[field] = None
+    # author
+    if metadata['author'] is None:
+        metadata['author'] = extract_author(tree)
 
     # correction: author not a name
     if metadata['author'] is not None:
-        if ' ' not in metadata['author'] or metadata['author'].startswith('http'):
+        if metadata['author'].startswith('http'):
             metadata['author'] = None
     # fix: try json-ld metadata and override
     metadata = extract_json(tree, metadata)
@@ -387,9 +400,6 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
     # title
     if metadata['title'] is None:
         metadata['title'] = extract_title(tree)
-    # author
-    if metadata['author'] is None:
-        metadata['author'] = extract_author(tree)
     # url
     if metadata['url'] is None:
         metadata['url'] = extract_url(tree, default_url)

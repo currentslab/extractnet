@@ -8,7 +8,7 @@ import dateparser
 import joblib
 
 from .compat import string_, str_cast, unicode_
-from .util import get_and_union_features, convert_segmentation_to_text
+from .util import get_and_union_features, convert_segmentation_to_text, fix_encoding
 from .blocks import TagCountReadabilityBlockifier
 from .features.author import AuthorFeatures
 from .sequence_tagger.models import word2features
@@ -421,7 +421,7 @@ class CascadeExtractor(BaseEstimator, ClassifierMixin):
             best_index = np.argmax(auth_blocks[:, 1])
             auth_prob = auth_blocks[best_index, 1]
             if auth_prob > 0.5:
-                results['rawAuthor'] = str_cast(full_blocks[best_index].text).encode().decode('unicode_escape')
+                results['rawAuthor'] = fix_encoding(str_cast(full_blocks[best_index].text))
                 results['author'] = self.extract_author(results['rawAuthor'])
 
         best_index = np.argmax(date_blocks[:, 1])

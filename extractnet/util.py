@@ -12,7 +12,7 @@ import pkgutil
 
 import joblib
 from sklearn.pipeline import FeatureUnion, make_union
-
+import ftfy
 from .compat import model_path, range_, string_, PY2
 from .features import get_feature
 from .sequence_tagger.models import NON_WORD_CHAR
@@ -170,6 +170,7 @@ def load_pickled_model(filename, dirname=None):
 def convert_segmentation_to_text(pred_label, text):
     names = []
     name = ''
+
     for idx, char in enumerate(text):
         if pred_label[idx] == 'B':
             if len(name) > 0:
@@ -186,3 +187,12 @@ def convert_segmentation_to_text(pred_label, text):
         names.append(NON_WORD_CHAR.sub('', name))
 
     return names
+
+def fix_encoding(text):
+    if isinstance(text, str):
+        text = ftfy.fix_text(ftfy.fix_encoding(text))
+        if '\\u' in text:
+            text = text.encode().decode('unicode_escape')
+        return text
+    elif isinstance(text, list):
+        return [ ftfy.fix_text(ftfy.fix_encoding(t)) for t in text ]

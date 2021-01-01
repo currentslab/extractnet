@@ -1,7 +1,7 @@
 from .extractor import MultiExtractor
 from .metadata_extraction.metadata import extract_metadata
 from .compat import string_, str_cast, unicode_
-from .util import get_and_union_features, convert_segmentation_to_text
+from .util import get_and_union_features, convert_segmentation_to_text, fix_encoding
 from .sequence_tagger.models import word2features, NON_WORD_CHAR
 
 import os
@@ -85,16 +85,16 @@ class Extractor(BaseEstimator):
         Normalize and tidy some results
         '''
         if 'author' in results:
-            results['rawAuthor'] = results['author']
+            results['rawAuthor'] = fix_encoding(results['author'])
             results['authorList'] = []
             if isinstance(results['rawAuthor'], list):
                 for author_txt in results['rawAuthor']:
                     results['authorList'] += self.extract_author(author_txt)
             elif isinstance(results['rawAuthor'], str):
-                results['rawAuthor'] = results['rawAuthor'].encode().decode('unicode_escape')
+                results['rawAuthor'] = results['rawAuthor']
                 results['authorList'] = self.extract_author(results['rawAuthor'])
             if len(results['authorList']) == 0:
-                results['authorList'] = [ NON_WORD_CHAR.sub('', results['rawAuthor']).encode().decode('unicode_escape') ]
+                results['authorList'] = [ NON_WORD_CHAR.sub('', results['rawAuthor']) ]
             results.pop('author')
 
         if 'date' in results:
@@ -133,7 +133,6 @@ class Extractor(BaseEstimator):
                     ml_fallback.update(meta_ml_fallback)
             else:
                 documents_meta_data = [{}] * len(documents)
-
         ml_results = self.ml_extract(documents, encoding=encoding, as_blocks=as_blocks, **ml_fallback)
         # we assume the accuracy of meta data is always better than machine learning
         if isinstance(documents, (str, bytes, unicode_, np.unicode_)):
