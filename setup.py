@@ -74,7 +74,7 @@ ext_modules = [
 
 setup(
     name='extractnet',
-    version='1.0.2',
+    version='1.0.3',
     description='Extract the main article content (and optionally comments) from a web page',
     author='Ray',
     author_email='zhirui.tam@currentsapi.services',
