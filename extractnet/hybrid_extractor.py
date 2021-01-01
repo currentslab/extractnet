@@ -91,9 +91,10 @@ class Extractor(BaseEstimator):
                 for author_txt in results['rawAuthor']:
                     results['authorList'] += self.extract_author(author_txt)
             elif isinstance(results['rawAuthor'], str):
+                results['rawAuthor'] = results['rawAuthor'].encode().decode('unicode_escape')
                 results['authorList'] = self.extract_author(results['rawAuthor'])
             if len(results['authorList']) == 0:
-                results['authorList'] = [ NON_WORD_CHAR.sub('', results['rawAuthor']) ]
+                results['authorList'] = [ NON_WORD_CHAR.sub('', results['rawAuthor']).encode().decode('unicode_escape') ]
             results.pop('author')
 
         if 'date' in results:

@@ -421,7 +421,7 @@ class CascadeExtractor(BaseEstimator, ClassifierMixin):
             best_index = np.argmax(auth_blocks[:, 1])
             auth_prob = auth_blocks[best_index, 1]
             if auth_prob > 0.5:
-                results['rawAuthor'] = str_cast(full_blocks[best_index].text)
+                results['rawAuthor'] = str_cast(full_blocks[best_index].text).encode().decode('unicode_escape')
                 results['author'] = self.extract_author(results['rawAuthor'])
 
         best_index = np.argmax(date_blocks[:, 1])
