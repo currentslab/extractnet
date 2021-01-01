@@ -15,7 +15,7 @@ from sklearn.pipeline import FeatureUnion, make_union
 
 from .compat import model_path, range_, string_, PY2
 from .features import get_feature
-
+from .sequence_tagger.models import NON_WORD_CHAR
 
 def dameraulevenshtein(seq1, seq2):
     """Calculate the Damerau-Levenshtein distance between sequences.
@@ -167,22 +167,22 @@ def load_pickled_model(filename, dirname=None):
     filepath = os.path.join(dirname, filename)
     return joblib.load(filepath)
 
-def convert_segmentation_to_text(output, text):
-    authors = []
-    author = ''
-    prev = 'O'
-    for idx, pred in enumerate(output):
-        if pred == 'B':
-            if len(author) > 0:
-                authors.append(author)
-            author = text[idx]
-        elif pred == 'I':
-            author += text[idx]
-        elif pred == 'O' and prev == 'I':
-            if len(author) > 0:
-                authors.append(author)
-            author = ''
-        prev = pred
-    if len(author) > 0:
-        authors.append(author)
-    return authors
+def convert_segmentation_to_text(pred_label, text):
+    names = []
+    name = ''
+    for idx, char in enumerate(text):
+        if pred_label[idx] == 'B':
+            if len(name) > 0:
+                names.append(NON_WORD_CHAR.sub('',name))
+                name = ''
+            name += char
+        elif pred_label[idx] == 'I':
+            name += char
+        else: # O
+            if len(name) > 0:
+                names.append(NON_WORD_CHAR.sub('',name))
+                name = ''
+    if len(name) > 0 and NON_WORD_CHAR.sub('', name):
+        names.append(NON_WORD_CHAR.sub('', name))
+
+    return names

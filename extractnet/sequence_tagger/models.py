@@ -3,7 +3,7 @@ import json
 import re
 import numpy as np
 
-NON_WORD_CHAR = re.compile(r'[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。| |  |/|｜|】|【|」| 》|>|<|《|;|；|：|」|"|\'|／|「]')
+NON_WORD_CHAR = re.compile(r'[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。| |  |/|｜|】|【|」| 》|>|<|《|;|；|：|」|"|\'|／|「|}|{|,]')
 
 def word2features(sent, i, embeddings):
     word = sent[i]
@@ -74,19 +74,18 @@ class NameExtractor():
         for idx, char in enumerate(text):
             if pred_label[idx] == 'B':
                 if len(name) > 0:
-                    names.append(name)
+                    names.append(NON_WORD_CHAR.sub('',name))
                     name = ''
                 name += char
             elif pred_label[idx] == 'I':
                 name += char
             else: # O
                 if len(name) > 0:
-                    names.append(name)
+                    names.append(NON_WORD_CHAR.sub('',name))
                     name = ''
-        if len(name) > 0:
-            names.append(name)
+        if len(name) > 0 and NON_WORD_CHAR.sub('', name):
+            names.append(NON_WORD_CHAR.sub('', name))
         return names
-
 
 
     def predict(self, sent):

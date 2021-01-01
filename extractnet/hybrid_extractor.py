@@ -2,7 +2,7 @@ from .extractor import MultiExtractor
 from .metadata_extraction.metadata import extract_metadata
 from .compat import string_, str_cast, unicode_
 from .util import get_and_union_features, convert_segmentation_to_text
-from .sequence_tagger.models import word2features
+from .sequence_tagger.models import word2features, NON_WORD_CHAR
 
 import os
 from sklearn.base import BaseEstimator
@@ -28,6 +28,8 @@ def merge_results(r1, r2):
     return r1
 
 def remove_empty_keys(r1):
+    if r1 is None:
+        return {}
     for key in list(r1.keys()):
         if r1[key] is None:
             r1.pop(key)
@@ -91,7 +93,7 @@ class Extractor(BaseEstimator):
             elif isinstance(results['rawAuthor'], str):
                 results['authorList'] = self.extract_author(results['rawAuthor'])
             if len(results['authorList']) == 0:
-                results['authorList'] = [ results['rawAuthor'] ]
+                results['authorList'] = [ NON_WORD_CHAR.sub('', results['rawAuthor']) ]
             results.pop('author')
 
         if 'date' in results:
