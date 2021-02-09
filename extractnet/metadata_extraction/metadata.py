@@ -341,7 +341,7 @@ def extract_sitename(tree):
             mymatch = re.search(r'^.*?[-|]\s+(.*)$', title_elem.text)
             if mymatch:
                 return mymatch.group(1)
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
     return None
 
