@@ -8,6 +8,24 @@ Based on the popular content extraction package [Dragnet](https://github.com/dra
 ![ExtractNet pipeline](docs/source/_images/extractnet-pipeline.jpg)
 
 
+**Example code:**
+
+Simply use the following command to install the latest released version:
+
+```
+pip install extractnet
+```
+
+Start extract content and other meta data passing the result html to function
+
+```
+from extractnet import Extractor
+
+raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
+results = Extractor().extract(raw_html)
+```
+
+
 ## Why don't just use existing rule-base extraction method:
 
 We discover some webpage doesn't provide the real author name but simply populate the author tag with a default value.

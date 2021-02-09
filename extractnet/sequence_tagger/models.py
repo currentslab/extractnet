@@ -3,7 +3,7 @@ import json
 import re
 import numpy as np
 
-NON_WORD_CHAR = re.compile(r'[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。| |  |/|｜|】|【|」| 》|>|<|《|;|；|：|」|"|\'|／|「|}|{|,]')
+NON_WORD_CHAR = re.compile(r'[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。|/|｜|】|【|」|》|>|<|《|;|；|：|」|"|\'|／|「|}|{|,]')
 
 def word2features(sent, i, embeddings):
     word = sent[i]

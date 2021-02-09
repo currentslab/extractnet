@@ -196,3 +196,10 @@ def fix_encoding(text):
         return text
     elif isinstance(text, list):
         return [ ftfy.fix_text(ftfy.fix_encoding(t)) for t in text ]
+
+
+def priority_merge(x, main):
+    # merge x outputs into `main` results
+    z = x.copy()
+    z.update(main)
+    return z

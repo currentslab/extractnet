@@ -1,7 +1,7 @@
 from .extractor import MultiExtractor
 from .metadata_extraction.metadata import extract_metadata
 from .compat import string_, str_cast, unicode_
-from .util import get_and_union_features, convert_segmentation_to_text, fix_encoding
+from .util import get_and_union_features, convert_segmentation_to_text, fix_encoding, priority_merge
 from .sequence_tagger.models import word2features, NON_WORD_CHAR
 
 import os
@@ -38,14 +38,17 @@ def remove_empty_keys(r1):
 class Extractor(BaseEstimator):
 
 
-    def __init__(self, 
+    def __init__(self,
             stage1_classifer=None,
-            author_classifier=None, 
+            author_classifier=None,
             date_classifier=None,
             author_embeddings=None,
-            author_tagger=None, 
+            author_tagger=None,
             data_prob_threshold=0.5,
             author_prob_threshold=0.5,
+            postprocess=[],
+            meta_postprocess=[],
+            # preprocess=[],
             ):
         '''
             For inference use only
@@ -57,10 +60,10 @@ class Extractor(BaseEstimator):
 
         if date_classifier is None:
             date_classifier = os.path.join(EXTRACTOR_DIR, 'models/datePublishedRaw_extractor.pkl.gz')
-        
+
         if author_embeddings is None:
             author_embeddings = os.path.join(EXTRACTOR_DIR, 'models/char_embedding.joblib')
-        
+
         if author_tagger is None:
             author_tagger = os.path.join(EXTRACTOR_DIR, 'models/crf.joblib')
 
@@ -79,6 +82,14 @@ class Extractor(BaseEstimator):
 
         self.author_embedding = joblib.load(author_embeddings)
         self.author_tagger = joblib.load(author_tagger)
+
+        self.postprocess_pipelines = postprocess
+        self.has_post = len(postprocess) > 0
+
+        # self.preprocess_pipelines = preprocess
+        # self.has_pre = len(preprocess) > 0
+        self.meta_postprocess_pipelines = meta_postprocess
+        self.has_meta_pos = len(meta_postprocess) > 0
 
     def post_process(self, results):
         '''
@@ -103,11 +114,14 @@ class Extractor(BaseEstimator):
 
         return results
 
-    def extract(self, documents, 
+    def __call__(self, documents, **kwargs):
+        return self.extract(documents, **kwargs)
+
+    def extract(self, documents,
             extract_content=True,
             extract_headlines=True,
-            encoding='utf-8', 
-            as_blocks=False, 
+            encoding='utf-8',
+            as_blocks=False,
             metadata_mining=True
         ):
 
@@ -125,27 +139,54 @@ class Extractor(BaseEstimator):
             if metadata_mining:
                 documents_meta_data, meta_ml_fallback = self.extract_one_meta(documents)
                 ml_fallback.update(meta_ml_fallback)
+
+                if self.has_meta_pos:
+                    for pipeline in self.meta_postprocess_pipelines:
+                        meta_post_result = pipeline(documents)
+                        documents_meta_data = priority_merge(meta_post_result, documents_meta_data)
+
         else:
             documents_meta_data = []
             if metadata_mining:
                 for document in documents:
                     document_meta_data, meta_ml_fallback = self.extract_one_meta(document)
                     ml_fallback.update(meta_ml_fallback)
+
+                    if self.has_meta_pos:
+                        for pipeline in self.meta_postprocess_pipelines:
+                            meta_post_result = pipeline(document)
+                            document_meta_data = priority_merge(meta_post_result, document_meta_data)
+
+                    documents_meta_data.append(document_meta_data)
             else:
                 documents_meta_data = [{}] * len(documents)
-        ml_results = self.ml_extract(documents, encoding=encoding, as_blocks=as_blocks, **ml_fallback)
+        if isinstance(documents, (str, bytes, unicode_, np.unicode_)):
+            ml_results = self.ml_extract(documents, encoding=encoding, as_blocks=as_blocks, **ml_fallback)
+        else:
+            ml_results = [  self.ml_extract(doc, encoding=encoding, as_blocks=as_blocks, **ml_fallback) \
+                    for doc in documents ]
+
         # we assume the accuracy of meta data is always better than machine learning
         if isinstance(documents, (str, bytes, unicode_, np.unicode_)):
-            ml_results = self.post_process( 
+            ml_results = self.post_process(
                 merge_results(ml_results, documents_meta_data)
             )
-            return ml_results
+            if self.has_post:
+                for pipeline in self.postprocess_pipelines:
+                    post_ml_results_ = pipeline(documents, ml_results)
+                    ml_results = priority_merge(post_ml_results_, ml_results)
+
         else:
             for idx, meta_data in enumerate(documents_meta_data):
-                ml_results[idx] = self.post_process( 
+                ml_results[idx] = self.post_process(
                     merge_results(ml_results[idx], meta_data)
                 )
-            return ml_results
+                if self.has_post:
+                    for pipeline in self.postprocess_pipelines:
+                        post_ml_results_ = pipeline(documents, ml_results[idx])
+                        ml_results[idx] = priority_merge(post_ml_results_, ml_results[idx])
+
+        return ml_results
 
     @staticmethod
     def extract_one_meta(document):
@@ -196,14 +237,14 @@ class Extractor(BaseEstimator):
             ):
 
         extract_target_index, target_order = self.format_index_feature(
-            extract_content=extract_content, 
+            extract_content=extract_content,
             extract_headlines=extract_headlines,
             extract_description=extract_description,
             extract_breadcrumbs=extract_breadcrumbs,
         )
 
-        multi_blocks, full_blocks = self.stage1_clf.extract(html, 
-            encoding=encoding, as_blocks=True, return_blocks=True, 
+        multi_blocks, full_blocks = self.stage1_clf.extract(html,
+            encoding=encoding, as_blocks=True, return_blocks=True,
             extract_target=extract_target_index)
 
         # str_cast(b'\n'.join(blocks[ind].text for ind in np.flatnonzero(preds)
