@@ -174,17 +174,17 @@ def convert_segmentation_to_text(pred_label, text):
     for idx, char in enumerate(text):
         if pred_label[idx] == 'B':
             if len(name) > 0:
-                names.append(NON_WORD_CHAR.sub('',name))
+                names.append(NON_WORD_CHAR.sub('',name).strip())
                 name = ''
             name += char
         elif pred_label[idx] == 'I':
             name += char
         else: # O
             if len(name) > 0:
-                names.append(NON_WORD_CHAR.sub('',name))
+                names.append(NON_WORD_CHAR.sub('',name).strip())
                 name = ''
     if len(name) > 0 and NON_WORD_CHAR.sub('', name):
-        names.append(NON_WORD_CHAR.sub('', name))
+        names.append(NON_WORD_CHAR.sub('', name).strip())
 
     return names
 
