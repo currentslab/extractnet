@@ -83,15 +83,16 @@ Results of author name extraction:
 
 * Includes a [CRF](https://en.wikipedia.org/wiki/Conditional_random_field) model that extract names from author block text.
 
-* Trained on 22000+ updated webpages collected in the late 2020. The training data size is 20 times the size of dragnet data.
+* Trained on 22000+ updated webpages collected in the late 2020, **20 times** of dragnet data.
 
 ## GETTING STARTED
+
+### Installing and extraction
 
 ```
 pip install extractnet
 ```
 
-Code
 ```
 from extractnet import Extractor
 
@@ -102,6 +103,39 @@ for key, value in results.items():
     print(value)
     print('------------')
 ```
+
+### Callbacks
+
+ExtractNet also support the ability to add callbacks functions to inject additional features during extraction process
+
+A quick glance of usage : each callbacks will be able to access the raw html string provided during the extraction process. This allows user to extract addtional information such as language detection to the final results
+
+```
+def meta_pre1(raw_html):
+    return {'first_value': 0}
+
+def meta_pre2(raw_html):
+    return {'first_value': 1, 'second_value': 2}
+
+def postprocess1(raw_html, results):
+    return {'like': 1}
+
+extract = Extractor(author_prob_threshold=0.1, 
+      meta_postprocess=[meta_pre1, meta_pre2], 
+      postprocess=[postprocess1])
+```
+
+The extracted results will contain **like**, **first_value** and **second_value**. Do note callbacks are executed by the given order ( which means meta_pre1 will be executed first followed by meta_pre2 ), any results passed from the **previous stage will not be overwritten by later stage** 
+
+```
+
+raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
+results = extract(raw_html)
+
+```
+
+In this example the value for first_value will remain 0 even though meta_pre2 also returns first_value=1 because meta_pre2 callbacks already assign first_value as 0. 
+
 
 # Contributing
 
