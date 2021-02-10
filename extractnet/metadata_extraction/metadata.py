@@ -20,32 +20,16 @@ import itertools
 from .metaxpaths import author_xpaths, categories_xpaths, tags_xpaths, title_xpaths
 from .video import get_advance_fields
 from .utils import load_html, trim, split_tags
-
-
+from .constant import (
+    METADATA_LIST, HTMLDATE_CONFIG, TITLE_REGEX, 
+    JSON_AUTHOR_1, JSON_AUTHOR_2, JSON_AUTHOR_3,
+    JSON_PUBLISHER, JSON_CATEGORY, JSON_NAME, JSON_HEADLINE,
+    TEXT_AUTHOR_PATTERNS, URL_COMP_CHECK, BLACKLIST_AUTHOR
+)
 LOGGER = logging.getLogger(__name__)
 logging.getLogger('htmldate').setLevel(logging.WARNING)
 
-METADATA_LIST = ['title', 'author', 'url', 'hostname', 'description', 'sitename', 'date', 'categories', 'tags', 'fingerprint', 'id']
 
-HTMLDATE_CONFIG = {'extensive_search': False, 'original_date': True}
-
-TITLE_REGEX = re.compile(r'(.+)?\s+[-|]\s+.*$')
-JSON_AUTHOR_1 = re.compile(r'"author":[^}[]+?"name?\\?": ?\\?"([^"\\]+)|"author"[^}[]+?"names?".+?"([^"]+)|"author": ?\\?"([^"\\]+)"', re.DOTALL)
-JSON_AUTHOR_2 = re.compile(r'"[Pp]erson"[^}]+?"names?".+?"([^"]+)', re.DOTALL)
-JSON_AUTHOR_3 = re.compile(r'"author": ?\\?"([^"\\]+)"')
-
-JSON_PUBLISHER = re.compile(r'"publisher":[^}]+?"name?\\?": ?\\?"([^"\\]+)', re.DOTALL)
-JSON_CATEGORY = re.compile(r'"articleSection": ?"([^"\\]+)', re.DOTALL)
-JSON_NAME = re.compile(r'"@type":"[Aa]rticle", ?"name": ?"([^"\\]+)', re.DOTALL)
-JSON_HEADLINE = re.compile(r'"headline": ?"([^"\\]+)', re.DOTALL)
-
-TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', 
-    '記者[^ ]*／[^ ]*報導〕', '記者[^ ]*日電〕', 
-    '文／[^ ]* ', '記者[^ ]*／[^ ]*報導', 
-    '／記者[^ ]*報導', '記者[^ ]*／[^ ]*報導',
-    '【[^ ]*專欄】', '【[^ ]*快報[^ ]*】', '【[^ ]*／[^ ]*】' ]
-
-URL_COMP_CHECK = re.compile(r'https?://|/')
 
 
 
@@ -386,8 +370,9 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
                 metadata[field] = advance_fields[field]
             else:
                 metadata[field] = None
+
     # author
-    if metadata['author'] is None:
+    if metadata['author'] is None or URL_COMP_CHECK.match(metadata['author']) or  metadata['author'] in BLACKLIST_AUTHOR:
         metadata['author'] = extract_author(tree)
 
     # correction: author not a name
