@@ -18,7 +18,7 @@ pip install extractnet
 
 Start extract content and other meta data passing the result html to function
 
-```
+```python
 from extractnet import Extractor
 
 raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
@@ -44,6 +44,8 @@ ExtractNet uses machine learning approach to extract these relevant data through
 * The core of ExtractNet aims to convert unstructured webpage to structured data without relying hand crafted rules
 
 * ExtractNet do not support boilerplate content extraction
+
+* ExtractNet allows user to add custom pipelines that returns additional data through a list of [callbacks function](https://github.com/currentsapi/extractnet#callbacks)
 
 <br />
 
@@ -93,7 +95,7 @@ Results of author name extraction:
 pip install extractnet
 ```
 
-```
+```python
 from extractnet import Extractor
 
 raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
@@ -110,7 +112,7 @@ ExtractNet also support the ability to add callbacks functions to inject additio
 
 A quick glance of usage : each callbacks will be able to access the raw html string provided during the extraction process. This allows user to extract addtional information such as language detection to the final results
 
-```
+```python
 def meta_pre1(raw_html):
     return {'first_value': 0}
 
@@ -127,7 +129,7 @@ extract = Extractor(author_prob_threshold=0.1,
 
 The extracted results will contain **like**, **first_value** and **second_value**. Do note callbacks are executed by the given order ( which means meta_pre1 will be executed first followed by meta_pre2 ), any results passed from the **previous stage will not be overwritten by later stage** 
 
-```
+```python
 
 raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
 results = extract(raw_html)
