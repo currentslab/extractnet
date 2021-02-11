@@ -4,11 +4,11 @@ ExtractNet
 
 Based on the popular content extraction package [Dragnet](https://github.com/dragnet-org/dragnet/), ExtractNet extend the machine learning approach to extract other attributes such as date, author and keywords from news article. 
 
-
-![ExtractNet pipeline](docs/source/_images/extractnet-pipeline.jpg)
+![demo code](docs/source/_images/showcase.svg)
 
 
 **Example code:**
+
 
 Simply use the following command to install the latest released version:
 
@@ -19,9 +19,10 @@ pip install extractnet
 Start extract content and other meta data passing the result html to function
 
 ```python
+import requests
 from extractnet import Extractor
 
-raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
+raw_html = requests.get('https://currentsapi.services/en/blog/2019/03/27/python-microframework-benchmark/.html').text
 results = Extractor().extract(raw_html)
 ```
 
@@ -35,6 +36,9 @@ For example [ltn.com.tw](https://news.ltn.com.tw), [udn.com](https://udn.com/new
 ![Our machine learnig first approach extract correct fields just like human reading a website](docs/source/_images/extraction-example.jpg)
 
 ExtractNet uses machine learning approach to extract these relevant data through visible section of the webpage just like a human.
+
+![ExtractNet pipeline](docs/source/_images/extractnet-pipeline.jpg)
+
 
 
 ## What ExtractNet is and isn't
