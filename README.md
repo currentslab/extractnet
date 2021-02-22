@@ -12,7 +12,7 @@ Based on the popular content extraction package [Dragnet](https://github.com/dra
 
 Simply use the following command to install the latest released version:
 
-```
+```bash
 pip install extractnet
 ```
 
@@ -70,6 +70,7 @@ We use the same body extraction benchmark from [article-extraction-benchmark](ht
 | html-text  | 0.500 ± 0.017  | 0.994 ± 0.001  | 0.665 ± 0.015  |  0.000 ± 0.000  | &#10004; |
 | newspaper  |  0.917 ± 0.013 | 0.906 ± 0.017  | 0.912 ± 0.014  | 0.260 ± 0.032   | &#10004; |
 | readability  | 0.913 ± 0.014   | 0.931 ± 0.015  | 0.922 ± 0.013  | 0.315 ± 0.034   | &#10004; |
+| trafilatura  | 0.930 ± 0.010  | 0.967 ± 0.009  | 0.948 ± 0.008   | 0.243 ± 0.031   | &#10004; |
 
 <br />
 Results of author name extraction:
@@ -122,12 +123,15 @@ def meta_pre1(raw_html):
 def meta_pre2(raw_html):
     return {'first_value': 1, 'second_value': 2}
 
-def postprocess1(raw_html, results):
-    return {'like': 1}
+def find_stock_ticker(raw_html, results):
+    matched_ticker = []
+    for ticket in re.findall(r'[$][A-Za-z][\S]*', str(results['content'])):
+      matched_ticker.append(ticket)
+    return {'matched_ticker': matched_ticker}
 
 extract = Extractor(author_prob_threshold=0.1, 
       meta_postprocess=[meta_pre1, meta_pre2], 
-      postprocess=[postprocess1])
+      postprocess=[find_stock_ticker])
 ```
 
 The extracted results will contain **like**, **first_value** and **second_value**. Do note callbacks are executed by the given order ( which means meta_pre1 will be executed first followed by meta_pre2 ), any results passed from the **previous stage will not be overwritten by later stage** 
