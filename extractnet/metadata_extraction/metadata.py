@@ -41,7 +41,7 @@ JSON_HEADLINE = re.compile(r'"headline": ?"([^"\\]+)', re.DOTALL)
 
 TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', 
     '記者[^ ]*／[^ ]*報導〕', '記者[^ ]*日電〕', 
-    '文／[^ ]* ', '記者[^ ]*／[^ ]*報導', 
+    '文／[^ ]* ', '記者[^ ]*／[^ ]*報導', '記者 [^ ]* 報導',
     '／記者[^ ]*報導', '記者[^ ]*／[^ ]*報導',
     '【[^ ]*專欄】', '【[^ ]*快報[^ ]*】', '【[^ ]*／[^ ]*】' ]
 
@@ -84,7 +84,11 @@ def extract_json(tree, metadata):
         if '"publisher"' in elem.text:
             mymatch = JSON_PUBLISHER.search(elem.text)
             if mymatch and not ',' in mymatch.group(1):
-                metadata['sitename'] = trim(mymatch.group(1))
+                candidate = normalize_json(mymatch.group(1))
+                if metadata['sitename'] is None or len(metadata['sitename']) < len(candidate):
+                    metadata['sitename'] = candidate
+                if metadata['sitename'].startswith('http') and not candidate.startswith('http'):
+                    metadata['sitename'] = candidate
         # category
         if '"articleSection"' in elem.text:
             mymatch = JSON_CATEGORY.search(elem.text)
