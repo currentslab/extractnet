@@ -58,3 +58,14 @@ def test_get_and_union_features_tuple():
     )
     assert isinstance(features, FeatureUnion)
     assert [t[0] for t in features.transformer_list] == ['feat1', 'feat2']
+
+
+
+def test_dict_merge():
+    x = {'a': 1, 'b': 2}
+    y = {'b': 10, 'c': 11}
+
+    output = util.priority_merge(x, y)
+    assert output['b'] == y['b']
+    assert 'a' in output
+

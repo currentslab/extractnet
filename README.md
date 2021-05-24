@@ -4,8 +4,27 @@ ExtractNet
 
 Based on the popular content extraction package [Dragnet](https://github.com/dragnet-org/dragnet/), ExtractNet extend the machine learning approach to extract other attributes such as date, author and keywords from news article. 
 
+![demo code](docs/source/_images/showcase.svg)
 
-![ExtractNet pipeline](docs/source/_images/extractnet-pipeline.jpg)
+
+**Example code:**
+
+
+Simply use the following command to install the latest released version:
+
+```bash
+pip install extractnet
+```
+
+Start extract content and other meta data passing the result html to function
+
+```python
+import requests
+from extractnet import Extractor
+
+raw_html = requests.get('https://currentsapi.services/en/blog/2019/03/27/python-microframework-benchmark/.html').text
+results = Extractor().extract(raw_html)
+```
 
 
 ## Why don't just use existing rule-base extraction method:
@@ -18,6 +37,9 @@ For example [ltn.com.tw](https://news.ltn.com.tw), [udn.com](https://udn.com/new
 
 ExtractNet uses machine learning approach to extract these relevant data through visible section of the webpage just like a human.
 
+![ExtractNet pipeline](docs/source/_images/extractnet-pipeline.jpg)
+
+
 
 ## What ExtractNet is and isn't
 
@@ -26,6 +48,8 @@ ExtractNet uses machine learning approach to extract these relevant data through
 * The core of ExtractNet aims to convert unstructured webpage to structured data without relying hand crafted rules
 
 * ExtractNet do not support boilerplate content extraction
+
+* ExtractNet allows user to add custom pipelines that returns additional data through a list of [callbacks function](https://github.com/currentsapi/extractnet#callbacks)
 
 <br />
 
@@ -36,24 +60,24 @@ Results of the body extraction evaluation:
 We use the same body extraction benchmark from [article-extraction-benchmark](https://github.com/scrapinghub/article-extraction-benchmark) 
 
 
-| Model  | Precision  | Recall  | F1  | Accuracy  |
-|---|---|---|---|---|
-| AutoExtract |  0.984 ± 0.003 | 0.956 ± 0.010  | 0.970 ± 0.005  | 0.470 ± 0.037   |
-| Diffbot  | 0.958 ± 0.009  | 0.944 ± 0.013  | 0.951 ± 0.010  |  0.348 ± 0.035  |
-| boilerpipe  | 0.850 ± 0.016  |  0.870 ± 0.020 | 0.860 ± 0.016  | 0.006 ± 0.006   |
-| dragnet  |  0.925 ± 0.012 | 0.889 ± 0.018  | 0.907 ± 0.014  | 0.221 ± 0.030   |
-| **ExtractNet**  | 0.922 ± 0.011  |  0.933 ± 0.013 | 0.927 ± 0.010  | 0.160 ± 0.027  |
-| html-text  | 0.500 ± 0.017  | 0.994 ± 0.001  | 0.665 ± 0.015  |  0.000 ± 0.000  |
-| newspaper  |  0.917 ± 0.013 | 0.906 ± 0.017  | 0.912 ± 0.014  | 0.260 ± 0.032   |
-| readability  | 0.913 ± 0.014   | 0.931 ± 0.015  | 0.922 ± 0.013  | 0.315 ± 0.034   |
-| trafilatura  | 0.930 ± 0.010  | 0.967 ± 0.009  | 0.948 ± 0.008   | 0.243 ± 0.031   |
+| Model  | Precision  | Recall  | F1  | Accuracy  | Open Source |
+|---|---|---|---|---|---|
+| AutoExtract |  0.984 ± 0.003 | 0.956 ± 0.010  | 0.970 ± 0.005  | 0.470 ± 0.037   | &#10007; |
+| Diffbot  | 0.958 ± 0.009  | 0.944 ± 0.013  | 0.951 ± 0.010  |  0.348 ± 0.035  | &#10007; |
+| **ExtractNet**  | 0.922 ± 0.011  |  0.933 ± 0.013 | 0.927 ± 0.010  | 0.160 ± 0.027  | &#10004; |
+| boilerpipe  | 0.850 ± 0.016  |  0.870 ± 0.020 | 0.860 ± 0.016  | 0.006 ± 0.006   | &#10004; |
+| dragnet  |  0.925 ± 0.012 | 0.889 ± 0.018  | 0.907 ± 0.014  | 0.221 ± 0.030   | &#10004; |
+| html-text  | 0.500 ± 0.017  | 0.994 ± 0.001  | 0.665 ± 0.015  |  0.000 ± 0.000  | &#10004; |
+| newspaper  |  0.917 ± 0.013 | 0.906 ± 0.017  | 0.912 ± 0.014  | 0.260 ± 0.032   | &#10004; |
+| readability  | 0.913 ± 0.014   | 0.931 ± 0.015  | 0.922 ± 0.013  | 0.315 ± 0.034   | &#10004; |
+| trafilatura  | 0.930 ± 0.010  | 0.967 ± 0.009  | 0.948 ± 0.008   | 0.243 ± 0.031   | &#10004; |
 
 <br />
 Results of author name extraction:
 
 | Model  | F1  |
 |---|---|
-| fasttext embeddings + CRF |  0.904 ± 0.10  |
+| **ExtractNet** : fasttext embeddings + CRF |  0.904 ± 0.10  |
 
 <br />
 
@@ -65,16 +89,17 @@ Results of author name extraction:
 
 * Includes a [CRF](https://en.wikipedia.org/wiki/Conditional_random_field) model that extract names from author block text.
 
-* Trained on 22000+ updated webpages collected in the late 2020. The training data size is 20 times the size of dragnet data.
+* Trained on 22000+ updated webpages collected in the late 2020, **20 times** of dragnet data.
 
 ## GETTING STARTED
+
+### Installing and extraction
 
 ```
 pip install extractnet
 ```
 
-Code
-```
+```python
 from extractnet import Extractor
 
 raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
@@ -84,6 +109,42 @@ for key, value in results.items():
     print(value)
     print('------------')
 ```
+
+### Callbacks
+
+ExtractNet also support the ability to add callbacks functions to inject additional features during extraction process
+
+A quick glance of usage : each callbacks will be able to access the raw html string provided during the extraction process. This allows user to extract addtional information such as language detection to the final results
+
+```python
+def meta_pre1(raw_html):
+    return {'first_value': 0}
+
+def meta_pre2(raw_html):
+    return {'first_value': 1, 'second_value': 2}
+
+def find_stock_ticker(raw_html, results):
+    matched_ticker = []
+    for ticket in re.findall(r'[$][A-Za-z][\S]*', str(results['content'])):
+      matched_ticker.append(ticket)
+    return {'matched_ticker': matched_ticker}
+
+extract = Extractor(author_prob_threshold=0.1, 
+      meta_postprocess=[meta_pre1, meta_pre2], 
+      postprocess=[find_stock_ticker])
+```
+
+The extracted results will contain **like**, **first_value** and **second_value**. Do note callbacks are executed by the given order ( which means meta_pre1 will be executed first followed by meta_pre2 ), any results passed from the **previous stage will not be overwritten by later stage** 
+
+```python
+
+raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
+results = extract(raw_html)
+
+```
+
+In this example the value for first_value will remain 0 even though meta_pre2 also returns first_value=1 because meta_pre2 callbacks already assign first_value as 0. 
+
 
 # Contributing
 

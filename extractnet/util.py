@@ -174,17 +174,17 @@ def convert_segmentation_to_text(pred_label, text):
     for idx, char in enumerate(text):
         if pred_label[idx] == 'B':
             if len(name) > 0:
-                names.append(NON_WORD_CHAR.sub('',name))
+                names.append(NON_WORD_CHAR.sub('',name).strip())
                 name = ''
             name += char
         elif pred_label[idx] == 'I':
             name += char
         else: # O
             if len(name) > 0:
-                names.append(NON_WORD_CHAR.sub('',name))
+                names.append(NON_WORD_CHAR.sub('',name).strip())
                 name = ''
     if len(name) > 0 and NON_WORD_CHAR.sub('', name):
-        names.append(NON_WORD_CHAR.sub('', name))
+        names.append(NON_WORD_CHAR.sub('', name).strip())
 
     return names
 
@@ -196,3 +196,10 @@ def fix_encoding(text):
         return text
     elif isinstance(text, list):
         return [ ftfy.fix_text(ftfy.fix_encoding(t)) for t in text ]
+
+
+def priority_merge(x, main):
+    # merge x outputs into `main` results
+    z = x.copy()
+    z.update(main)
+    return z

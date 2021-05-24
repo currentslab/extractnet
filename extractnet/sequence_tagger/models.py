@@ -3,7 +3,7 @@ import json
 import re
 import numpy as np
 
-NON_WORD_CHAR = re.compile(r'[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。| |  |/|｜|】|【|」| 》|>|<|《|;|；|：|」|"|\'|／|「|}|{|,]')
+NON_WORD_CHAR = re.compile(r'[-|——|,|.|:|@|#|!|$|%|^|&|*|，|、|；|-|+|~|`|⋯⋯|。|/|｜|】|【|」|》|>|<|《|;|；|：|」|"|\'|／|「|}|{|,]')
 
 def word2features(sent, i, embeddings):
     word = sent[i]
@@ -116,6 +116,7 @@ if __name__ == '__main__':
     extractor = NameExtractor('extractnet/models/char_embedding.joblib', 'extractnet/models/crf.joblib')
     for idx in range(5):
         print(word2features('文／記者劉讖語', idx, extractor.embedding))
+        print(word2features('（林媛玲／台北報導）', idx, extractor.embedding))
 
     # print(extractor.predict('文／記者劉讖語'))
     # print(extractor.predict('By Sarah Mervosh and Lucy Tompkins'))

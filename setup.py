@@ -72,9 +72,13 @@ ext_modules = [
               language="c++"),
 ]
 
+this_directory = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='extractnet',
-    version='1.0.3',
+    version='1.0.4',
     description='Extract the main article content (and optionally comments) from a web page',
     author='Ray',
     author_email='zhirui.tam@currentsapi.services',
@@ -82,6 +86,8 @@ setup(
     license='MIT',
     platforms='Posix; MacOS X',
     keywords='automatic content extraction, web page dechroming, HTML parsing',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Development Status :: 5 - Production/Stable',

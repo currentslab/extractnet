@@ -289,6 +289,7 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
             str or List[Block]
         """
         multi_preds, blocks = self.predict(html, encoding=encoding, return_blocks=True, extract_target=extract_target)
+
         outputs = []
         for preds in multi_preds.T:
             if as_blocks is False:
@@ -313,9 +314,20 @@ class MultiExtractor(BaseEstimator, ClassifierMixin):
         """
         if isinstance(documents, (str, bytes, unicode_, np.unicode_)):
             return self._predict_one(documents, **kwargs)
-        else:
-            return np.concatenate([self._predict_one(doc, **kwargs) for doc in documents])
+        else: # not working avoid this if possible
+            multi_preds, blocks = [], []
+            for doc in documents:
+                outputs = self._predict_one(doc, **kwargs)
+                if isinstance(outputs, tuple):
+                    multi_pred, block = outputs
+                    blocks.append(block)
 
+                else:
+                    multi_pred = outputs
+                multi_preds.append(multi_pred)
+            if len(blocks) > 0:
+                return np.concatenate(multi_preds).T, blocks
+            return np.concatenate(multi_preds).T
 
     def _predict_one(self, document, encoding='utf-8', return_blocks=False, extract_target=None):
         """
