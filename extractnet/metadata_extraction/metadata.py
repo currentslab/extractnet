@@ -80,7 +80,7 @@ def extract_json(tree, metadata):
         if '"publisher"' in elem.text:
             mymatch = JSON_PUBLISHER.search(elem.text)
             if mymatch and not ',' in mymatch.group(1):
-                candidate = normalize_json(mymatch.group(1))
+                candidate = trim(mymatch.group(1))
                 if metadata['sitename'] is None or len(metadata['sitename']) < len(candidate):
                     metadata['sitename'] = candidate
                 if metadata['sitename'].startswith('http') and not candidate.startswith('http'):
