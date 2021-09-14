@@ -18,6 +18,8 @@ VOX_EMBED_URL = 'https://volume.vox-cdn.com/embed/'
 
 CNBC_EMBED_URL = 'https://player.cnbc.com/p/gZWlPC/cnbc_global?playertype=synd&byGuid='
 
+VALID_AUDIO_EXTENSION = ['.mp3', '.wav', '.aac', 'flac', '.vox', 'webm']
+
 def handle_akamai_video(akamai_url):
     raw_html = get_raw_html(akamai_url)
     soup = bs(raw_html, 'lxml')
@@ -57,16 +59,25 @@ def get_advance_fields(raw_html):
     audio_urls = None
 
     if audio_tag is not None:
-        if audio_tag.get('src') and audio_tag.get('type') and audio_tag.get('type') == 'audio/mpeg':
-            if audio_urls == None:
-                audio_urls = []
-            audio_urls.append(audio_tag.get('src'))
+        audio_src_value = audio_tag.get('src')
+        if audio_src_value:
+            if audio_tag.get('type') and audio_tag.get('type') == 'audio/mpeg':
+                if audio_urls == None:
+                    audio_urls = []
+                audio_urls.append(audio_src_value)
+            elif audio_src_value[-4:] in VALID_AUDIO_EXTENSION:
+                if audio_urls == None:
+                    audio_urls = []
+
+                audio_urls.append(audio_src_value)
+
         audio_sources = audio_tag.findAll('source')
  
         for audio_source in audio_sources:
             if audio_urls == None:
                 audio_urls = []
             audio_urls.append(audio_source.get('src'))
+            print(audio_urls)
 
     if soup.find('div', {'class': 'speechkit-container'}):
         speechkit = soup.find('div', {'class': 'speechkit-container'})
@@ -82,7 +93,7 @@ def get_advance_fields(raw_html):
     youtube_iframe = soup.find('iframe', {'id': 'video'})
     video_url = None
     content = None
-
+    rules = -1
 
     if youtube_iframe and youtube_iframe.get('src'):
         youtube_src = youtube_iframe.get('src')
@@ -90,10 +101,11 @@ def get_advance_fields(raw_html):
             youtube_id, _ = youtube_src.split('?', 1)
             youtube_id = youtube_id.replace(YT_EMBED_URL, '')
             video_url = 'https://www.youtube.com/watch?v='+youtube_id
-
+        rules = 0
     elif soup.find('div', {'data-test': 'VideoPlaceHolder', 'class': 'PlaceHolder-wrapper'}):
         video_id = soup.find('div', {'data-test': 'VideoPlaceHolder', 'class': 'PlaceHolder-wrapper'}).get('data-vilynx-id')
         video_url = CNBC_EMBED_URL+video_id
+        rules = 1
 
     elif soup.find('div', { 'class': 'main-article-body'}) and soup.find('div', { 'class': 'main-article-body'}).find('div', {'id': 'vdoContainer'}):
         video_container = soup.find('div', { 'class': 'main-article-body'})
@@ -105,7 +117,7 @@ def get_advance_fields(raw_html):
                 rendition = props['renditions'][0]
                 video_url = rendition['url']
                 content = props['longDescription']
-
+        rules = 2
     elif soup.find('div', {'class': 'vxp-media__summary'}):
         content = ''
         for p in soup.find('div', {'class': 'vxp-media__summary'}).findAll('p'):
@@ -113,18 +125,28 @@ def get_advance_fields(raw_html):
         media_player = soup.find('div', {'class': 'media-player-wrapper'})
         figure_data = json.loads(media_player.find('figure').get('data-playable'))
         video_url = figure_data['settings']['externalEmbedUrl']
-
+        rules = 3
     elif soup.find('div', {'class': 'c-video-embed volume-video'}):
         video_tag = soup.find('div', {'class': 'c-video-embed volume-video'}).get('data-volume-uuid')
         video_url = VOX_EMBED_URL + video_tag
+        rules = 4
+
     elif soup.find('meta', {'property': 'og:video'}) and 'xml' not in soup.find('meta', {'property': 'og:video'}).get('content'):
         video_url = soup.find('meta', {'property': 'og:video'}).get('content')
-    elif soup.find('iframe', {'width': True, 'height': True}):
-        video_url = soup.find('iframe', {'width': True, 'height': True}).get('src')
+        rules = 5
+
+    elif raw_html.find(YT_EMBED_URL) != -1:
+        idx = raw_html.find(YT_EMBED_URL)
+        yt_postfix = raw_html[idx: idx+100]
+        video_url = yt_postfix.split('"')[0].replace('\\','')
+        rules = 6
     elif soup.find('div', {'id': 'art_video', 'class': 'YTplayer'}):
         video_url = YT_VIDEO+soup.find('div', {'id': 'art_video', 'class': 'YTplayer'}).get('data-ytid')
+        rules = 7
+
     elif soup.find('script', {'id': '__NEXT_DATA__', 'type': 'application/json'}):
         payload = soup.find('script', {'id': '__NEXT_DATA__', 'type': 'application/json'}).string
+        rules = 8
         if 'videoAssets' in payload:
             try:
                 payload = json.loads(payload)
@@ -145,9 +167,15 @@ def get_advance_fields(raw_html):
                 pass
     elif soup.find('video', {'id':'video_player'}) and soup.find('video', {'id':'video_player'}).find('source'):
         video_url = soup.find('video', {'id':'video_player'}).find('source').get('src')
-
+        rules = 9
     elif soup.find('video-player', {'video-type': 'youtube'}):
         video_url = soup.find('video-player', {'video-type': 'youtube'}).get('source')
+        rules = 10
+    if soup.find('iframe', {'width': True, 'height': True}):
+        possible_iframe = soup.find('iframe', {'width': True, 'height': True})
+        if str(possible_iframe.get('width')) != '0' and str(possible_iframe.get('height')) != '0':
+            video_url = possible_iframe.get('content')
+        rules = 11
 
     if video_url != None:
         if YT_EMBED_URL == video_url[:len(YT_EMBED_URL)]:

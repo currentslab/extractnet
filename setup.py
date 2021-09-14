@@ -78,7 +78,7 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='extractnet',
-    version='1.0.4',
+    version='1.0.5',
     description='Extract the main article content (and optionally comments) from a web page',
     author='Ray',
     author_email='zhirui.tam@currentsapi.services',
