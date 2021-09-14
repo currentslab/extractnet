@@ -1,6 +1,8 @@
 
 ExtractNet
 =======
+[![PyPI version](https://badge.fury.io/py/extractnet.svg)](https://badge.fury.io/py/extractnet) [![codecov](https://codecov.io/gh/currentsapi/extractnet/branch/master/graph/badge.svg?token=0WIGWGFN8H)](https://codecov.io/gh/currentsapi/extractnet) 
+
 
 Based on the popular content extraction package [Dragnet](https://github.com/dragnet-org/dragnet/), ExtractNet extend the machine learning approach to extract other attributes such as date, author and keywords from news article. 
 
