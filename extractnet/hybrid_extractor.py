@@ -1,16 +1,18 @@
-from .extractor import MultiExtractor
-from .metadata_extraction.metadata import extract_metadata
-from .compat import string_, str_cast, unicode_
-from .util import get_and_union_features, convert_segmentation_to_text, fix_encoding, priority_merge
-from .sequence_tagger.models import word2features, NON_WORD_CHAR
-
 import os
 from sklearn.base import BaseEstimator
 import joblib
 import numpy as np
 import dateparser
+import logging
 
 EXTRACTOR_DIR = __file__.replace('/hybrid_extractor.py','')
+
+from .extractor import MultiExtractor
+from .metadata_extraction.metadata import extract_metadata
+from .compat import str_cast, unicode_
+from .util import convert_segmentation_to_text, fix_encoding, priority_merge
+from .sequence_tagger.models import word2features, NON_WORD_CHAR
+
 
 def merge_results(r1, r2):
 
@@ -110,8 +112,10 @@ class Extractor(BaseEstimator):
 
         if 'date' in results:
             results['rawDate'] = results['date']
-            results['date'] = dateparser.parse(results['rawDate'])
-
+            try:
+                results['date'] = dateparser.parse(results['rawDate'])
+            except Exception as err:
+                logging.warning("Date parsing failed, error : {}".format(err))
         return results
 
     def __call__(self, documents, **kwargs):

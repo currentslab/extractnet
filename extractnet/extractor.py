@@ -443,14 +443,16 @@ class CascadeExtractor(BaseEstimator, ClassifierMixin):
         if date_prob > 0.5:
             date_found = True
             results['rawDate'] = str_cast(full_blocks[best_index].text)
-            results['date'] = dateparser.parse(results['rawDate'])
+            try:
+                results['date'] = dateparser.parse(results['rawDate'])
+            except Exception as err:
+                logging.warning("date parsing failed, error : {}".format(err))
 
         if as_blocks:
             results['raw_blocks'] = multi_blocks
 
         if debug:
             results['all_blocks'] = full_blocks
-            results['full_content_blocks'] = full_content_blocks
             results['author_prob'] = auth_blocks
 
         return results
