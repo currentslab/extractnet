@@ -8,15 +8,12 @@ under GNU GPL v3 license
 """
 
 
+import itertools
 import logging
 import re
-
-from courlan.clean import normalize_url
-from courlan.core import extract_domain
-from courlan.filters import validate_url
 from htmldate import find_date
 from lxml import html
-import itertools
+from .url_utils import url_normalizer, extract_domain, url_is_valid
 from .metaxpaths import author_xpaths, categories_xpaths, tags_xpaths, title_xpaths
 from .video import get_advance_fields
 from .utils import load_html, trim, split_tags
@@ -121,7 +118,7 @@ def extract_opengraph(tree):
             title = elem.get('content')
         # orig URL
         elif elem.get('property') == 'og:url':
-            if validate_url(elem.get('content'))[0] is True:
+            if url_is_valid(elem.get('content'))[0] is True:
                 url = elem.get('content')
         # description
         elif elem.get('property') == 'og:description':
@@ -187,7 +184,7 @@ def examine_meta(tree):
                     site_name = content_attr
             # url
             elif name_attr == 'twitter:url':
-                if url is None and validate_url(content_attr)[0] is True:
+                if url is None and url_is_valid(content_attr)[0] is True:
                     url = content_attr
             # keywords
             elif name_attr == 'keywords': # 'page-topic'
@@ -325,11 +322,11 @@ def extract_url(tree, default_url=None):
                     break
     # sanity check: don't return invalid URLs
     if url is not None:
-        validation_result, parsed_url = validate_url(url)
+        validation_result, parsed_url = url_is_valid(url)
         if validation_result is False:
             url = None
         else:
-            url = normalize_url(parsed_url)
+            url = url_normalizer(parsed_url)
     return url
 
 

@@ -1,14 +1,6 @@
-import datetime
-import time
-import pytz
+import json
 from bs4 import BeautifulSoup as bs 
 from xml.sax.saxutils import escape
-import re
-import json
-import dateparser
-from datetime import datetime
-import re
-
 from .utils import parse_server_side_render, parse_ld_json, get_raw_html
 
 YT_EMBED_URL = 'https://www.youtube.com/embed/'
