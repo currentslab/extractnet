@@ -17,10 +17,7 @@ def html():
 
 
 def test_extractor(html):
-    auth_clf = joblib.load('extractnet/models/author_extractor.pkl.gz')
-    date_clf = joblib.load('extractnet/models/datePublishedRaw_extractor.pkl.gz')
-    extractor = Extractor('extractnet/models/final_extractor.pkl.gz', 
-                                    auth_clf, date_clf)
+    extractor = Extractor()
     
     results = extractor.extract(html, metadata_mining=False)
 
