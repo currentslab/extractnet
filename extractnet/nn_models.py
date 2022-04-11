@@ -10,9 +10,9 @@ from .blocks import TagCountReadabilityBlockifier
 
 class NewsNet():
     '''
-
         Inputs 
     '''
+    # order must be fixed
     label_order = ('content', 'author', 'headline', 'breadcrumbs', 'date')
 
     BASE_FEAT_SIZE = 9
@@ -20,9 +20,10 @@ class NewsNet():
     CSS_FEAT_SIZE = 43
     feats = ('kohlschuetter', 'weninger', 'readability', 'css')
 
-    def __init__(self, cls_threshold=0.1, binary_threshold=0.5):
+    def __init__(self, model_weight=None, cls_threshold=0.1, binary_threshold=0.5):
         self.feature_transform = get_and_union_features(self.feats)
-        self.ort_session = ort.InferenceSession(get_module_res('models/news_net.onnx'))
+        model_weight = get_module_res('models/news_net.onnx') if model_weight is None else model_weight
+        self.ort_session = ort.InferenceSession(model_weight)
         self.binary_threshold = binary_threshold
         self.cls_threshold = cls_threshold
 
@@ -68,7 +69,8 @@ class NewsNet():
                     scores = softmax([preds[:, idx]])[0]
                     ind = np.argpartition(preds[:, idx], -top_k)[-top_k:]
                     result = [ (fix_encoding(str_cast(blocks[idx].text), scores[idx])) for idx in ind if scores[idx] > self.cls_threshold]
-                    output[label] = result
+                    # sort values by confidence
+                    output[label] = sorted(result, lambda x:x[1], reverse=True)
                 else:
                     mask = expit(preds[:, idx]) > self.binary_threshold
                     ctx = fix_encoding(str_cast(b'\n'.join([ b.text for b in blocks[mask]])))
