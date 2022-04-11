@@ -1,11 +1,11 @@
 import unittest
-from extractnet import Extractor
+from extractnet.name_crf import AuthorExtraction
 
 class TestAuthorExtraction(unittest.TestCase):
 
     def test_baseline(self):
         
-        extract = Extractor()
+        extract = AuthorExtraction()
 
 
         examples = [
@@ -13,11 +13,11 @@ class TestAuthorExtraction(unittest.TestCase):
             ('Bassem Mroue, Sarah El Deeb And Zeina Karam', ['Bassem Mroue', 'Sarah El Deeb', 'Zeina Karam'])
         ]
         for text, labels in examples:
-            preds = extract.extract_author(text)
+            preds = extract(text)
             assert preds == labels
 
     def test_author_extraction_other_case(self):
-        extract = Extractor()
+        extract = AuthorExtraction()
 
         examples = [
             ('蘇銘翰 圖片來源／Toyota', ['蘇銘翰']),
@@ -33,5 +33,5 @@ class TestAuthorExtraction(unittest.TestCase):
             ('【財訊快報陳孟朔】',   ['陳孟朔']),
         ]
         for text, labels in examples:
-            preds = extract.extract_author(text)
+            preds = extract(text)
             assert preds == labels

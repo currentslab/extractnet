@@ -28,7 +28,7 @@ from setuptools import setup
 # have to import `Extension` after `setuptools.setup`
 from distutils.extension import Extension
 import sys
-
+from extractnet import __version__
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 import lxml
@@ -78,7 +78,7 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='extractnet',
-    version='1.0.6',
+    version=__version__,
     description='Extract the main article content (and optionally comments) from a web page',
     author='Peter',
     author_email='sales@currentsapi.services',
@@ -118,9 +118,11 @@ setup(
     package_data={'extractnet': ['pickled_models/*/*', 'models/*']},
     cmdclass={'build_ext': build_ext},
     ext_modules=cythonize(ext_modules),
-    install_requires=[
+    setup_requires = [
         'lxml',
         'Cython>=0.21.1',
+    ],
+    install_requires=[
         'beautifulsoup4==4.9.3',
         'ftfy>=4.1.0,<5.0.0',
         'numpy>=1.19.0',
@@ -129,7 +131,6 @@ setup(
         'sklearn-crfsuite==0.3.6',
         'dateparser==1.1.0',
         'joblib==0.17.0',
-        'catboost==0.24.2',
         'courlan==0.2.3',
         'htmldate==0.7.2'
     ]

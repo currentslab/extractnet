@@ -68,7 +68,7 @@ class ClusteredWeningerFeatures(BaseEstimator, TransformerMixin):
 
     __name__ = 'clustered_weninger'
 
-    def __init__(self, n_clusters=3, n_init=3, max_iter=50, tol=0.001):
+    def __init__(self, n_clusters=4, n_init=3, max_iter=50, tol=0.001):
         self.n_clusters = n_clusters
         self.n_init = n_init
         self.max_iter = max_iter

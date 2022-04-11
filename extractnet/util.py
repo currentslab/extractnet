@@ -17,6 +17,10 @@ from .compat import model_path, range_, string_, PY2
 from .features import get_feature
 from .sequence_tagger.models import NON_WORD_CHAR
 
+
+get_module_res = lambda *res: os.path.normpath(os.path.join(
+    os.getcwd(), os.path.dirname(__file__), *res))
+
 def dameraulevenshtein(seq1, seq2):
     """Calculate the Damerau-Levenshtein distance between sequences.
 
@@ -147,25 +151,6 @@ def get_and_union_features(features):
     else:
         return features
 
-def load_pickled_model(filename, dirname=None):
-    """
-    Load a pickled ``Extractor`` model from disk.
-
-    Args:
-        filename (str): Name of pickled model file under ``dirname``.
-        dirname (str): Name of directory on disk containing the pickled model.
-            If None, dragnet's default pickled model directory is used:
-            /path/to/dragnet/pickled_models/[PY_VERSION]_[SKLEARN_VERSION]
-
-    Returns:
-        :class:`dragnet.extractor.Extractor`
-    """
-    if dirname is None:
-        pkg_filename = pkgutil.get_loader('extractor').get_filename('extractor')
-        pkg_dirname = os.path.dirname(pkg_filename)
-        dirname = os.path.join(pkg_dirname, 'pickled_models', model_path)
-    filepath = os.path.join(dirname, filename)
-    return joblib.load(filepath)
 
 def convert_segmentation_to_text(pred_label, text):
     names = []
@@ -196,6 +181,30 @@ def fix_encoding(text):
         return text
     elif isinstance(text, list):
         return [ ftfy.fix_text(ftfy.fix_encoding(t)) for t in text ]
+
+
+def merge_results(r1, r2):
+
+    for key in r2.keys():
+        if key not in r1:
+            r1[key] = r2[key]
+        elif isinstance(r1[key], str) and isinstance(r2[key], str):
+            r1[key] = [r1[key], r2[key]]
+        elif isinstance(r1[key], str) and isinstance(r2[key], list):
+            r1[key] = r2[key] + [r1[key]]
+        elif isinstance(r1[key], list) and isinstance(r2[key], str):
+            r1[key] = r1[key] + [r2[key]]
+        elif isinstance(r1[key], list) and isinstance(r2[key], list):
+            r1[key] += r2[key]
+    return r1
+
+def remove_empty_keys(r1):
+    if r1 is None:
+        return {}
+    for key in list(r1.keys()):
+        if r1[key] is None:
+            r1.pop(key)
+    return r1
 
 
 def priority_merge(x, main):

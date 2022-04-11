@@ -14,28 +14,8 @@ from .util import convert_segmentation_to_text, fix_encoding, priority_merge
 from .sequence_tagger.models import word2features, NON_WORD_CHAR
 
 
-def merge_results(r1, r2):
 
-    for key in r2.keys():
-        if key not in r1:
-            r1[key] = r2[key]
-        elif isinstance(r1[key], str) and isinstance(r2[key], str):
-            r1[key] = [r1[key], r2[key]]
-        elif isinstance(r1[key], str) and isinstance(r2[key], list):
-            r1[key] = r2[key] + [r1[key]]
-        elif isinstance(r1[key], list) and isinstance(r2[key], str):
-            r1[key] = r1[key] + [r2[key]]
-        elif isinstance(r1[key], list) and isinstance(r2[key], list):
-            r1[key] += r2[key]
-    return r1
 
-def remove_empty_keys(r1):
-    if r1 is None:
-        return {}
-    for key in list(r1.keys()):
-        if r1[key] is None:
-            r1.pop(key)
-    return r1
 
 class Extractor(BaseEstimator):
 
@@ -291,9 +271,3 @@ class Extractor(BaseEstimator):
             results['raw_blocks'] = multi_blocks
 
         return results
-
-    def extract_author(self, text):
-        text = text.strip()
-        embeddings = [word2features(text, i, self.author_embedding) for i in range(len(text))]
-        y_pred = self.author_tagger.predict([embeddings])
-        return convert_segmentation_to_text(y_pred[0], text)
