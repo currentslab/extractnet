@@ -51,6 +51,9 @@ class Extractor(BaseEstimator, ClassifierMixin):
 
         return meta_data
 
+    def __call__(self, html, **kwargs):
+        return self.extract(html, **kwargs)
+
     def extract(self, html, encoding=None, as_blocks=False, extract_target=None, debug=True, metadata_mining=True):
         if isinstance(html, (str, bytes, unicode_, np.unicode_)):
             documents_meta_data = {}

@@ -20,4 +20,6 @@ def html():
 
 
 def test_extractor(html):
-    pass
+    extractor = Extractor()
+    results = extractor(html, metadata_mining=True)
+    assert 'content' in results
