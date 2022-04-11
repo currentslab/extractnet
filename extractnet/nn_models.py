@@ -59,10 +59,11 @@ class NewsNet():
         decoded = self.decode_output(logits, blocks)
         return decoded[0] if single else decoded
 
-    def decode_output(self, logits, blocks):
+    def decode_output(self, logits, doc_blocks):
         outputs = []
-        for preds in enumerate(logits):
+        for jdx, preds in enumerate(logits):
             output = {}
+            blocks = doc_blocks[jdx]
             for idx, label in enumerate(self.label_order):
                 if label in ['author', 'date', 'breadcrumbs']:
                     top_k = 10
@@ -70,7 +71,7 @@ class NewsNet():
                     ind = np.argpartition(preds[:, idx], -top_k)[-top_k:]
                     result = [ (fix_encoding(str_cast(blocks[idx].text), scores[idx])) for idx in ind if scores[idx] > self.cls_threshold]
                     # sort values by confidence
-                    output[label] = sorted(result, lambda x:x[1], reverse=True)
+                    output[label] = sorted(result, key=lambda x:x[1], reverse=True)
                 else:
                     mask = expit(preds[:, idx]) > self.binary_threshold
                     ctx = fix_encoding(str_cast(b'\n'.join([ b.text for b in blocks[mask]])))

@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from extractnet import extract_content, extract_comments, extract_content_and_comments
+from extractnet import extract_news
 from extractnet.blocks import simple_tokenizer
 from extractnet.util import evaluation_metrics
 
@@ -19,13 +19,7 @@ def html():
 
 
 def test_models(html):
-    pass
+    results = extract_news(html)
 
-def test_content_and_content_comments_extractor(html):
-    pass
-
-def test_content_and_content_comments_extractor_blocks(html):
-    """
-    The content and content/comments extractor should return proper blocks
-    """
-    pass
+    assert 'content' in results
+    assert 'headline' in results
