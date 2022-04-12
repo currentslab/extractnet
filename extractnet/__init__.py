@@ -1,8 +1,7 @@
-__version__ = '2.0.0'
-
 from extractnet.blocks import Blockifier, PartialBlock, BlockifyError
 from extractnet import features
 from extractnet.pipeline import Extractor
+from extractnet.settings import __version__
 
 _LOADED_MODELS = {}
 

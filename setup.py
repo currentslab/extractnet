@@ -28,7 +28,7 @@ from setuptools import setup
 # have to import `Extension` after `setuptools.setup`
 from distutils.extension import Extension
 import sys
-from extractnet import __version__
+from extractnet.settings import __version__
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 import lxml
