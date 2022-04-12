@@ -28,7 +28,7 @@ from setuptools import setup
 # have to import `Extension` after `setuptools.setup`
 from distutils.extension import Extension
 import sys
-from extractnet.settings import __version__
+import re, io
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 import lxml
@@ -75,6 +75,11 @@ ext_modules = [
 this_directory = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
+
+__version__ = re.search(
+    r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
+    io.open('main_package/__init__.py', encoding='utf_8_sig').read()
+    ).group(1)
 
 setup(
     name='extractnet',
