@@ -69,7 +69,7 @@ class NewsNet():
                     top_k = 10
                     scores = softmax([preds[:, idx]])[0]
                     ind = np.argpartition(preds[:, idx], -top_k)[-top_k:]
-                    result = [ (fix_encoding(str_cast(blocks[idx].text), scores[idx])) for idx in ind if scores[idx] > self.cls_threshold]
+                    result = [ (fix_encoding(str_cast(blocks[idx].text)), scores[idx]) for idx in ind if scores[idx] > self.cls_threshold]
                     # sort values by confidence
                     output[label] = sorted(result, key=lambda x:x[1], reverse=True)
                 else:
