@@ -106,7 +106,7 @@ class Extractor(BaseEstimator, ClassifierMixin):
         for attribute, value in output.items():
             if attribute in ['author', 'date']:
                 continue
-            if isinstance(value, str):
+            if isinstance(value, str) or value is None:
                 results[attribute] = value
             else:
                 # is list of tuple (string, float) format
@@ -117,6 +117,6 @@ class Extractor(BaseEstimator, ClassifierMixin):
         if self.has_post:
             for pipeline in self.postprocess_pipelines:
                 post_ml_results_ = pipeline(html, results)
-                results = priority_merge(post_ml_results_, ml_results)
+                results = priority_merge(post_ml_results_, results)
 
         return results
