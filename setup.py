@@ -78,7 +78,7 @@ with open(os.path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 __version__ = re.search(
     r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',  # It excludes inline comment too
-    io.open('main_package/__init__.py', encoding='utf_8_sig').read()
+    io.open('extractnet/__init__.py', encoding='utf_8_sig').read()
     ).group(1)
 
 setup(
