@@ -3,12 +3,7 @@ import os
 
 import numpy as np
 import pytest
-from sklearn.linear_model import LogisticRegression
-
 from extractnet import Extractor
-from extractnet.blocks import TagCountNoCSSReadabilityBlockifier
-from extractnet.util import get_and_union_features
-from extractnet.compat import str_cast
 
 
 @pytest.fixture(scope="module")
@@ -18,8 +13,21 @@ def html():
         html_ = f.read()
     return html_
 
+@pytest.fixture(scope="module")
+def tag_html():
+    fname = os.path.join("test", "datafiles", "tags_test.html")
+    with io.open(fname, mode="rt") as f:
+        html_ = f.read()
+    return html_
+
 
 def test_extractor(html):
     extractor = Extractor()
-    results = extractor(html, metadata_mining=True)
+    results = extractor(html, metadata_mining=False)
     assert 'content' in results
+
+def test_extractor_w_meta(tag_html):
+    extractor = Extractor()
+    results = extractor(tag_html, metadata_mining=True)
+    assert 'content' in results
+    assert 'og_properties' in results

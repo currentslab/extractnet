@@ -106,11 +106,13 @@ def extract_opengraph(tree):
     '''Search meta tags following the OpenGraph guidelines (https://ogp.me/)'''
     title, author, url, description, site_name = (None,) * 5
     # detect OpenGraph schema
+    og_full_property = {}
     for elem in tree.xpath('.//head/meta[starts-with(@property, "og:")]'):
         # safeguard
         if not elem.get('content'):
             continue
         # site name
+        og_full_property[elem.get('property')[3:]] = elem.get('content')
         if elem.get('property') == 'og:site_name':
             site_name = elem.get('content')
         # blog title
@@ -132,20 +134,22 @@ def extract_opengraph(tree):
         # og:locale
         #elif elem.get('property') == 'og:locale':
         #    pagelocale = elem.get('content')
-    return trim(title), trim(author), trim(url), trim(description), trim(site_name)
+    return trim(title), trim(author), trim(url), trim(description), trim(site_name), og_full_property
 
 
 def examine_meta(tree):
     '''Search meta tags for relevant information'''
     metadata = dict.fromkeys(METADATA_LIST)
     # bootstrap from potential OpenGraph tags
-    title, author, url, description, site_name = extract_opengraph(tree)
+    title, author, url, description, site_name, og_full_property = extract_opengraph(tree)
     # test if all return values have been assigned
     if all((title, author, url, description, site_name)):  # if they are all defined
         metadata['title'], metadata['author'], metadata['url'], metadata['description'], metadata['sitename'] = title, author, url, description, site_name
+        metadata['og_properties'] = og_full_property
         return metadata
     tags = []
     # skim through meta tags
+    og_properties = {}
     for elem in tree.iterfind('.//head/meta[@content]'):
         # content
         if not elem.get('content'):
@@ -157,7 +161,7 @@ def examine_meta(tree):
         if 'property' in elem.attrib:
             # no opengraph a second time
             if elem.get('property').startswith('og:'):
-                continue
+                og_properties[elem.get('property')[3:] ] = content_attr
             if elem.get('property') == 'article:tag':
                 tags.append(content_attr)
             elif elem.get('property') in ('author', 'article:author'):
@@ -216,8 +220,10 @@ def examine_meta(tree):
         'url': url, 
         'description':description, 
         'site_name': site_name,
-        'tags': tags_
+        'tags': tags_,
+        'og_properties': og_properties
     })
+    print(metadata)
     return metadata
 
 
