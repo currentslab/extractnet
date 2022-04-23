@@ -1,5 +1,5 @@
 beautifulsoup4==4.9.3
-Cython>=0.21.1
+Cython
 ftfy>=4.1.0,<5.0.0
 numpy>=1.19.0
 onnxruntime==1.9.0

@@ -45,7 +45,6 @@ class Extractor(BaseEstimator, ClassifierMixin):
 
     @staticmethod
     def extract_one_meta(document):
-        ml_fallback = {}
         meta_data = extract_metadata(document)
         meta_data = remove_empty_keys(meta_data)
 
@@ -67,7 +66,7 @@ class Extractor(BaseEstimator, ClassifierMixin):
             documents_meta_data = []
             if metadata_mining:
                 for document in html:
-                    document_meta_data, meta_ml_fallback = self.extract_one_meta(document)
+                    document_meta_data = self.extract_one_meta(document)
                     if self.has_meta_pos:
                         for pipeline in self.meta_postprocess_pipelines:
                             meta_post_result = pipeline(document)

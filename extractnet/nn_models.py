@@ -2,7 +2,7 @@ import onnxruntime as ort
 import numpy as np
 from scipy.special import expit
 from sklearn.utils.extmath import softmax
-from .compat import string_, str_cast, unicode_
+from .compat import str_cast
 from .util import get_and_union_features, get_module_res, fix_encoding
 from .blocks import TagCountReadabilityBlockifier
 
