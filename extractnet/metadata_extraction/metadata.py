@@ -223,7 +223,6 @@ def examine_meta(tree):
         'tags': tags_,
         'og_properties': og_properties
     })
-    print(metadata)
     return metadata
 
 

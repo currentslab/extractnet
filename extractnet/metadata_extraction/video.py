@@ -9,7 +9,9 @@ YT_VIDEO = 'https://www.youtube.com/watch?v='
 VOX_EMBED_URL = 'https://volume.vox-cdn.com/embed/'
 
 CNBC_EMBED_URL = 'https://player.cnbc.com/p/gZWlPC/cnbc_global?playertype=synd&byGuid='
-
+BLACKLISTED = [
+    'www.googletagmanager.com'
+]
 VALID_AUDIO_EXTENSION = ['.mp3', '.wav', '.aac', 'flac', '.vox', 'webm']
 
 def handle_akamai_video(akamai_url):
@@ -168,7 +170,6 @@ def get_advance_fields(raw_html):
         if str(possible_iframe.get('width')) != '0' and str(possible_iframe.get('height')) != '0':
             video_url = possible_iframe.get('content')
         rules = 11
-
     if video_url != None:
         if YT_EMBED_URL == video_url[:len(YT_EMBED_URL)]:
             if '?' in video_url:
@@ -181,6 +182,11 @@ def get_advance_fields(raw_html):
                 
         if '//' == video_url[:2]:
             video_url = 'https:'+video_url
+
+    if isinstance(video_url, str):
+        for blacklist in BLACKLISTED:
+            if blacklist in video_url:
+                video_url = None
 
     return {
         'audio': audio_urls,
