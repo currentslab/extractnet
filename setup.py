@@ -120,7 +120,7 @@ setup(
         'extractnet.metadata_extraction': 'extractnet/metadata_extraction',
         'extractnet.features': 'extractnet/features',
         'extractnet.sequence_tagger': 'extractnet/sequence_tagger' },
-    package_data={'extractnet': ['pickled_models/*/*', 'models/*']},
+    package_data={'extractnet': ['pickled_models/*/*', 'models/*', '*', 'features/*']},
     cmdclass={'build_ext': build_ext},
     ext_modules=cythonize(ext_modules),
     setup_requires = [
