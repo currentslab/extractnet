@@ -35,7 +35,11 @@ class NewsNet():
         return feat, blocks
 
 
-    def predict(self, html):
+    def predict(self, html, top_rank=10):
+        '''
+            html: HTML string or list of HTML string
+            top_rank: top K block which used to predict author, breadcrumbs(keywords), date
+        '''
         single = False
         if isinstance(html, list):
             x, css, blocks= [], [], []
@@ -56,17 +60,17 @@ class NewsNet():
         inputs_onnx = { 'input': x, 'css': css }
 
         logits = self.ort_session.run(None, inputs_onnx)[0]
-        decoded = self.decode_output(logits, blocks)
+        decoded = self.decode_output(logits, blocks, top_rank=top_rank)
         return decoded[0] if single else decoded
 
-    def decode_output(self, logits, doc_blocks):
+    def decode_output(self, logits, doc_blocks, top_rank=10):
         outputs = []
         for jdx, preds in enumerate(logits):
             output = {}
             blocks = doc_blocks[jdx]
             for idx, label in enumerate(self.label_order):
                 if label in ['author', 'date', 'breadcrumbs']:
-                    top_k = 10
+                    top_k = min(top_rank, len(preds[:, idx]))
                     scores = softmax([preds[:, idx]])[0]
                     ind = np.argpartition(preds[:, idx], -top_k)[-top_k:]
                     result = [ (fix_encoding(str_cast(blocks[idx].text)), scores[idx]) for idx in ind if scores[idx] > self.cls_threshold]

@@ -153,6 +153,17 @@ In this example the value for first_value will remain 0 even though meta_pre2 al
 We love contributions! Open an issue, or fork/create a pull
 request.
 
+## Develop Locally
+
+Since extractnet relies on several C++ modules, before starting to run locally you need to compile them first
+
+Usually what you need would be this command
+```
+make
+```
+
+However, you can try to build it 
+
 # More details about the code structure
 
 Coming soon
