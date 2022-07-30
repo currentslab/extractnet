@@ -1,5 +1,5 @@
 import re
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import ParseResult, parse_qs, urlencode, urlparse
 from tld import get_tld
 
 NETLOC_RE = re.compile(r'(?<=\w):(?:80|443|8000|8080|5000)')
@@ -34,7 +34,17 @@ def url_is_valid(url):
     return True, parsed_url
 
 def url_normalizer(url):
-    parsed_url = urlparse(url)
+    '''
+        return a string of url, return None if failed
+    '''
+    if isinstance(url, ParseResult):
+        parsed_url = url
+    else:
+        try:
+            parsed_url = urlparse(url)
+        except AttributeError:
+            return None
+
     if parsed_url.port is not None and parsed_url.port in (80, 443):
         parsed_url = parsed_url._replace(netloc=NETLOC_RE.sub('', parsed_url.netloc))
     newpath = TYPICAL.sub('/', parsed_url.path)

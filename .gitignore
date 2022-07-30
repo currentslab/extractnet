@@ -6,7 +6,7 @@ dist/
 venv/
 .vscode/
 extractnet.egg-info
-
+env
 # IDEs
 .idea/
 

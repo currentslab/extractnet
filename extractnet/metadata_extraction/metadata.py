@@ -13,6 +13,7 @@ import logging
 import re
 from htmldate import find_date
 from lxml import html
+from numpy import isin
 from .url_utils import url_normalizer, extract_domain, url_is_valid
 from .metaxpaths import author_xpaths, categories_xpaths, tags_xpaths, title_xpaths
 from .video import get_advance_fields
@@ -330,8 +331,9 @@ def extract_url(tree, default_url=None):
         validation_result, parsed_url = url_is_valid(url)
         if validation_result is False:
             url = None
-        else:
+        elif isinstance(url, str) and len(parsed_url) > 0:
             url = url_normalizer(parsed_url)
+
     return url
 
 
