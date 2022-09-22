@@ -102,6 +102,7 @@ pip install extractnet
 ```
 
 ```python
+import requests
 from extractnet import Extractor
 
 raw_html = requests.get('https://apnews.com/article/6e58b5742b36e3de53298cf73fbfdf48').text
