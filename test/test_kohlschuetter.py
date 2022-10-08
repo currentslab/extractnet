@@ -89,7 +89,6 @@ class TestBlockifier(object):
                     <b>bold stuff</b> after the script
                </div>"""
         blocks = Blockifier.blockify(s, parse_callback=self.count_divs)
-        print(TestBlockifier.div_count)
         assert self.div_count == 2
 
     def test_simple_two_blocks(self):

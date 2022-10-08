@@ -71,7 +71,6 @@ def get_advance_fields(raw_html):
             if audio_urls == None:
                 audio_urls = []
             audio_urls.append(audio_source.get('src'))
-            print(audio_urls)
 
     if soup.find('div', {'class': 'speechkit-container'}):
         speechkit = soup.find('div', {'class': 'speechkit-container'})

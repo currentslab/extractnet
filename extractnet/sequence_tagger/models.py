@@ -111,13 +111,3 @@ class NameExtractor():
         return [ self.extract_token(pred, text[idx])  for idx, pred in enumerate(y_preds) ]
 
 
-if __name__ == '__main__':
-    print('start')
-    extractor = NameExtractor('extractnet/models/char_embedding.joblib', 'extractnet/models/crf.joblib')
-    for idx in range(5):
-        print(word2features('文／記者劉讖語', idx, extractor.embedding))
-        print(word2features('（林媛玲／台北報導）', idx, extractor.embedding))
-
-    # print(extractor.predict('文／記者劉讖語'))
-    # print(extractor.predict('By Sarah Mervosh and Lucy Tompkins'))
-    # print(extractor.predict('By Sarah Mervosh'))
