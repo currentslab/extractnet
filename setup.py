@@ -131,13 +131,13 @@ setup(
         'beautifulsoup4==4.9.3',
         'ftfy>=4.1.0,<5.0.0',
         'numpy>=1.19.0',
-        'onnxruntime==1.9.0',
+        'onnxruntime>=1.9.0',
         'scikit-learn>=0.22.0',
         'tld==0.12.6',
         'scipy>=0.17.0',
         'sklearn-crfsuite==0.3.6',
         'dateparser==1.1.0',
-        'joblib==0.17.0',
+        'joblib>=1.2.0',
         'htmldate==0.7.2'
     ]
 )
