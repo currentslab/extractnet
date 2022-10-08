@@ -420,8 +420,8 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
     try:
         metadata['date'] = find_date(tree, **date_config)
     # temporary fix for htmldate bug
-    except UnicodeError:
-        pass
+    except (UnicodeError, OverflowError) as e:
+        logging.warning('error in metadata date : '+str(e))
     # sitename
     if metadata['sitename'] is None:
         metadata['sitename'] = extract_sitename(tree)
