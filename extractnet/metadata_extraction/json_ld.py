@@ -64,7 +64,8 @@ def extract_json(schema, metadata):
                             list_authors = json.loads(list_authors)
                         except json.JSONDecodeError:
                             # it is a normal string
-                            metadata['name'] = normalize_authors(metadata['name'], list_authors)
+                            metadata['name'] = normalize_authors(metadata['name'] if 'name' in metadata else None, 
+                                                list_authors)
 
                     if not isinstance(list_authors, list):
                         list_authors = [list_authors]
