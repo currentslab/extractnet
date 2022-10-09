@@ -75,11 +75,15 @@ def extract_json(schema, metadata):
                                 author_name = author['name']
                                 if isinstance(author_name, list):
                                     author_name = '; '.join(author_name).strip('; ')
-                                metadata['name'] = normalize_authors(metadata['name'], author_name)
+
+                                metadata['name'] = normalize_authors(metadata['name'] if 'name' in metadata else None, 
+                                                                    author_name
+                                                                )
                             elif 'givenName' in author is not None and 'familyName' in author:
                                 name = [author['givenName'], author['additionalName'], author['familyName']]
                                 metadata['name'] = normalize_authors(
-                                    metadata['name'], ' '.join([n for n in name if n is not None])
+                                    metadata['name'] if 'name' in metadata else None, 
+                                    ' '.join([n for n in name if n is not None])
                                 )
                 # category
                 if metadata['categories'] is None and 'articleSection' in content:
