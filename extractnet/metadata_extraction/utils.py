@@ -7,54 +7,99 @@ Module bundling functions related to HTML and text processing.
 
 # import csv
 import logging
-import re
-import socket
-import sys
+from html import unescape
 from lxml import etree, html
 from functools import lru_cache
 import urllib
 import urllib.parse
 import json
 import urllib.request
+# use faster detection module
+try:
+    from cchardet import detect as cchardet_detect
+except ImportError:
+    cchardet_detect = None
+from charset_normalizer import from_bytes
 from bs4 import BeautifulSoup as bs
-
+from .constant import (
+    HTML_PARSER, RECOVERY_PARSER, SPLIT_TOKENS, NO_TAG_SPACE, SPACE_TRIMMING,
+    UNICODE_ALIASES, LINES_TRIMMING,
+    AUTHOR_EMAIL, AUTHOR_EMOJI_REMOVE, AUTHOR_PREFIX, AUTHOR_SPLIT,
+    AUTHOR_REMOVE_SPECIAL, AUTHOR_REPLACE_JOIN, AUTHOR_REMOVE_NICKNAME, 
+    AUTHOR_REMOVE_NUMBERS, AUTHOR_REMOVE_PREPOSITION, AUTHOR_TWITTER
+)
 LOGGER = logging.getLogger(__name__)
 
-# collect_ids=False, default_doctype=False, huge_tree=True,
-HTML_PARSER = html.HTMLParser(remove_comments=True, remove_pis=True, encoding='utf-8')
-RECOVERY_PARSER = html.HTMLParser(remove_comments=True, remove_pis=True)
-
-UNICODE_WHITESPACE = re.compile(r'\u00A0|\u1680|\u2000|\u2001|\u2002|\u2003|\u2004|\u2005|\u2006|\u2007|\u2008|\u2009|\u200a|\u2028|\u2029|\u202F|\u205F|\u3000')
-
-NO_TAG_SPACE = re.compile(r'(?<![p{P}>])\n')
-SPACE_TRIMMING = re.compile(r'\s+', flags=re.UNICODE|re.MULTILINE)
-
-NOPRINT_TRANS_TABLE = {
-    i: None for i in range(0, sys.maxunicode + 1) if not chr(i).isprintable() and not chr(i) in (' ', '\t', '\n')
-}
-
-# Check https://regex101.com/r/A326u1/5 for reference
-DOMAIN_FORMAT = re.compile(
-	r"(?:^(\w{1,255}):(.{1,255})@|^)" # http basic authentication [optional]
-	r"(?:(?:(?=\S{0,253}(?:$|:))" # check full domain length to be less than or equal to 253 (starting after http basic auth, stopping before port)
-	r"((?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+" # check for at least one subdomain (maximum length per subdomain: 63 characters), dashes in between allowed
-	r"(?:[a-z0-9]{1,63})))" # check for top level domain, no dashes allowed
-	r"|localhost)" # accept also "localhost" only
-	r"(:\d{1,5})?", # port [optional]
-	re.IGNORECASE
-)
-SCHEME_FORMAT = re.compile(
-	r"^(http|hxxp|ftp|fxp)s?$", # scheme: http(s) or ftp(s)
-	re.IGNORECASE
-)
-
-SPLIT_TOKENS = re.compile(r'[,|、]')
 
 def re_xpath(self, path):
     return self.xpath(path, namespaces={
         're': 'http://exslt.org/regular-expressions'})
 html.HtmlElement.re_xpath = re_xpath
 
+def isutf8(data):
+    """Simple heuristic to determine if a bytestring uses standard unicode encoding"""
+    try:
+        data.decode('UTF-8')
+    except UnicodeDecodeError:
+        return False
+    else:
+        return True
+
+@lru_cache(maxsize=1114111)  # sys.maxunicode = 1114111
+def return_printables_and_spaces(char):
+    'Return a character if it belongs to certain classes'
+    if char.isprintable() or char.isspace():
+        return char
+    return ''
+
+
+def remove_control_characters(string):
+    '''Prevent non-printable and XML invalid character errors'''
+    return ''.join(map(return_printables_and_spaces, string))
+
+@lru_cache(maxsize=1024)
+def line_processing(line):
+    '''Remove HTML space entities, then discard incompatible unicode
+       and invalid XML characters on line level'''
+    # spacing HTML entities: https://www.w3.org/MarkUp/html-spec/html-spec_13.html
+    line = line.replace('&#13;', '\r').replace('&#10;', '\n').replace('&nbsp;', '\u00A0')
+    # remove newlines that are not related to punctuation or markup
+    # remove non-printable chars and normalize space characters (including Unicode spaces)
+    line = trim(remove_control_characters(LINES_TRIMMING.sub(r' ', line)))
+    # prune empty lines
+    if all(map(str.isspace, line)):
+        line = None
+    return line
+
+def detect_encoding(bytesobject):
+    """"Read all input or first chunk and return a list of encodings"""
+    # alternatives: https://github.com/scrapy/w3lib/blob/master/w3lib/encoding.py
+    # unicode-test
+    if isutf8(bytesobject):
+        return ['utf-8']
+    guesses = []
+    # additional module
+    if cchardet_detect is not None:
+        cchardet_guess = cchardet_detect(bytesobject)['encoding']
+        if cchardet_guess is not None:
+            guesses.append(cchardet_guess.lower())
+    # try charset_normalizer on first part, fallback on full document
+    detection_results = from_bytes(bytesobject[:15000]) or from_bytes(bytesobject)
+    # return alternatives
+    if len(detection_results) > 0:
+        guesses.extend([r.encoding for r in detection_results])
+    # it cannot be utf-8 (tested above)
+    return [g for g in guesses if g not in UNICODE_ALIASES]
+
+def check_authors(authors, author_blacklist):
+    new_authors = [
+        author
+        for author in authors.split('; ')
+        if author.lower() not in [a.lower() for a in author_blacklist]
+    ]
+    if new_authors:
+        return '; '.join(new_authors).strip('; ')
+    return None
 
 def load_html(htmlobject, encoding='utf-8'):
     """Load object given as input and validate its type
@@ -194,3 +239,47 @@ def parse_ld_json(raw_html):
 							results.append(graph)
 
 	return results
+
+
+def normalize_authors(current_authors, author_string):
+    '''Normalize author info to focus on author names only'''
+    new_authors = []
+    if author_string.lower().startswith('http') or AUTHOR_EMAIL.match(author_string):
+        return current_authors
+    if current_authors is not None:
+        new_authors = current_authors.split('; ')
+    # fix to code with unicode
+    if '\\u' in author_string:
+        author_string = author_string.encode().decode('unicode_escape')
+    # fix html entities
+    if '&#' in author_string or '&amp;' in author_string:
+        author_string = unescape(author_string)
+    # examine names
+    for author in AUTHOR_SPLIT.split(author_string):
+        author = trim(author)
+        author = AUTHOR_EMOJI_REMOVE.sub('', author)
+        # remove @username
+        author = AUTHOR_TWITTER.sub('', author)
+        # replace special characters with space
+        author = trim(AUTHOR_REPLACE_JOIN.sub(' ', author))
+        author = AUTHOR_REMOVE_NICKNAME.sub('', author)
+        # remove special characters
+        author = AUTHOR_REMOVE_SPECIAL.sub('', author)
+        author = AUTHOR_PREFIX.sub('', author)
+        author = AUTHOR_REMOVE_NUMBERS.sub('', author)
+        author = AUTHOR_REMOVE_PREPOSITION.sub('', author)
+        # skip empty or improbably long strings
+        if len(author) == 0 or (
+            # simple heuristics, regex or vowel tests also possible
+            ' ' not in author and '-' not in author and len(author) >= 50
+            ):
+            continue
+        # title case
+        if not author[0].isupper() or sum(1 for c in author if c.isupper()) < 1:
+            author = author.title()
+        # safety checks
+        if author not in new_authors and (len(new_authors) == 0 or all(new_author not in author for new_author in new_authors)):
+            new_authors.append(author)
+    if len(new_authors) == 0:
+        return current_authors
+    return '; '.join(new_authors).strip('; ')

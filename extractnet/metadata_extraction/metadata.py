@@ -8,38 +8,53 @@ under GNU GPL v3 license
 """
 
 
+from distutils.command.clean import clean
 import itertools
 import logging
 import re
+import json
 from htmldate import find_date
 from lxml import html
 from urllib.parse import ParseResult
+from .json_ld import extract_json_parse_error, extract_json
 from .url_utils import url_normalizer, extract_domain, url_is_valid
 from .metaxpaths import author_xpaths, categories_xpaths, tags_xpaths, title_xpaths
 from .video import get_advance_fields
-from .utils import load_html, trim, split_tags
+from .utils import load_html, trim, split_tags, check_authors, unescape, line_processing
 from .constant import (
-    METADATA_LIST, HTMLDATE_CONFIG, TITLE_REGEX, 
-    JSON_AUTHOR_1, JSON_AUTHOR_2, JSON_AUTHOR_3,
-    JSON_PUBLISHER, JSON_CATEGORY, JSON_NAME, JSON_HEADLINE,
+    TEXT_LICENSE_REGEX, LICENSE_REGEX,
+    METADATA_LIST, TITLE_REGEX,  HTMLDATE_CONFIG_EXTENSIVE, HTMLDATE_CONFIG_FAST,
+    JSON_MINIFY,
     TEXT_AUTHOR_PATTERNS, URL_COMP_CHECK, BLACKLIST_AUTHOR
 )
 LOGGER = logging.getLogger(__name__)
 logging.getLogger('htmldate').setLevel(logging.WARNING)
 
 
-JSON_PUBLISHER = re.compile(r'"publisher":[^}]+?"name?\\?": ?\\?"([^"\\]+)', re.DOTALL)
-JSON_CATEGORY = re.compile(r'"articleSection": ?"([^"\\]+)', re.DOTALL)
-JSON_NAME = re.compile(r'"@type":"[Aa]rticle", ?"name": ?"([^"\\]+)', re.DOTALL)
-JSON_HEADLINE = re.compile(r'"headline": ?"([^"\\]+)', re.DOTALL)
+def criteria_fulfilled(metadata):
+    for key in ['author', 'sitename', 'categories', 'title', 'name']:
+        if key not in metadata:
+            return False
+    if all([metadata['author'], metadata['sitename'], metadata['categories'], metadata['title'], metadata['name']]):
+        return True
+    return False
 
-TEXT_AUTHOR_PATTERNS = [ '〔[^ ]*／[^ ]*報導〕', 
-    '記者[^ ]*／[^ ]*報導〕', '記者[^ ]*日電〕', 
-    '文／[^ ]* ', '記者[^ ]*／[^ ]*報導', '記者 [^ ]* 報導',
-    '／記者[^ ]*報導', '記者[^ ]*／[^ ]*報導',
-    '【[^ ]*專欄】', '【[^ ]*快報[^ ]*】', '【[^ ]*／[^ ]*】' ]
+def extract_meta_json(tree, metadata):
+    '''Parse and extract metadata from JSON-LD data'''
+    for elem in tree.xpath('.//script[@type="application/ld+json" or @type="application/settings+json"]'):
+        if not elem.text:
+            continue
+        element_text = JSON_MINIFY.sub(r'\1', elem.text)
+        try:
+            schema = json.loads(element_text)
+            metadata = extract_json(schema, metadata)
+        except json.JSONDecodeError:
+            metadata = extract_json_parse_error(element_text, metadata)
 
-URL_COMP_CHECK = re.compile(r'https?://|/')
+        if criteria_fulfilled(metadata):
+            break
+
+    return metadata
 
 
 
@@ -61,46 +76,7 @@ def extract_json_author(elemtext, regular_expression):
     return None
 
 
-def extract_json(tree, metadata):
-    '''Crudely extract metadata from JSON-LD data'''
-    for elem in tree.xpath('.//script[@type="application/ld+json" or @type="application/settings+json"]'):
-        if not elem.text:
-            continue
-        # author info
-        if 'author' not in metadata or metadata['author'] is None:
-            if '"author":' in elem.text:
-                metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_1)
-                if metadata['author'] is None:
-                    metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_2)
-                if metadata['author'] is None:
-                    metadata['author'] = extract_json_author(elem.text, JSON_AUTHOR_3)
-        # try to extract publisher
-        if '"publisher"' in elem.text:
-            mymatch = JSON_PUBLISHER.search(elem.text)
-            if mymatch and not ',' in mymatch.group(1):
-                candidate = url_normalizer(mymatch.group(1))
-                if metadata['sitename'] is None or len(metadata['sitename']) < len(candidate):
-                    metadata['sitename'] = candidate
-                if metadata['sitename'].startswith('http') and not candidate.startswith('http'):
-                    metadata['sitename'] = candidate
-        # category
-        if '"articleSection"' in elem.text:
-            mymatch = JSON_CATEGORY.search(elem.text)
-            if mymatch:
-                metadata['categories'] = split_tags(trim(mymatch.group(1)))
-        # try to extract title
-        if '"name"' in elem.text and metadata['title'] is None:
-            mymatch = JSON_NAME.search(elem.text)
-            if mymatch:
-                metadata['title'] = trim(mymatch.group(1))
-        if '"headline"' in elem.text and metadata['title'] is None:
-            mymatch = JSON_HEADLINE.search(elem.text)
-            if mymatch:
-                metadata['title'] = trim(mymatch.group(1))
-        # exit if found
-        if all([metadata['author'], metadata['sitename'], metadata['categories'], metadata['title']]):
-            break
-    return metadata
+
 
 
 def extract_opengraph(tree):
@@ -275,6 +251,41 @@ def extract_title(tree):
     return title
 
 
+def parse_license_element(element, strict=False):
+    '''Probe a link for identifiable free license cues.
+       Parse the href attribute first and then the link text.'''
+   # look for Creative Commons elements
+    match = LICENSE_REGEX.search(element.get('href'))
+    if match:
+        return 'CC ' + match[1].upper() + ' ' + match[2]
+    if element.text is not None:
+        # just return the anchor text without further ado
+        if strict is False:
+            return trim(element.text)
+        # else: check if it could be a CC license
+        match = TEXT_LICENSE_REGEX.search(element.text)
+        if match:
+            return match[0]
+    return None
+
+def extract_license(tree):
+    '''Search the HTML code for license information and parse it.'''
+    result = None
+    # look for links labeled as license
+    for element in tree.findall('.//a[@rel="license"][@href]'):
+        result = parse_license_element(element, strict=False)
+        if result is not None:
+            break
+    # probe footer elements for CC links
+    if result is None:
+        for element in tree.xpath(
+            './/footer//a[@href]|.//div[contains(@class, "footer") or contains(@id, "footer")]//a[@href]'
+        ):
+            result = parse_license_element(element, strict=True)
+            if result is not None:
+                break
+    return result
+
 def extract_author(tree):
     '''Extract the document author(s)'''
     author = extract_metainfo(tree, author_xpaths, len_limit=75)
@@ -344,9 +355,9 @@ def extract_sitename(tree):
     title_elem = tree.find('.//head/title')
     if title_elem is not None:
         try:
-            mymatch = re.search(r'^.*?[-|]\s+(.*)$', title_elem.text)
-            if mymatch:
-                return mymatch.group(1)
+            match_site = re.search(r'^.*?[-|]\s+(.*)$', title_elem.text)
+            if match_site:
+                return match_site.group(1)
         except (AttributeError, TypeError):
             pass
     return None
@@ -376,12 +387,26 @@ def extract_catstags(metatype, tree):
     return tags
 
 
-def extract_metadata(filecontent, default_url=None, date_config=None):
-    '''Main process for metadata extraction'''
+def extract_metadata(filecontent, default_url=None, date_config=None, fastmode=False, author_blacklist=BLACKLIST_AUTHOR):
+    """Main process for metadata extraction.
+    Args:
+        filecontent: HTML code as string.
+        default_url: Previously known URL of the downloaded document.
+        date_config: Provide extraction parameters to htmldate as dict().
+        author_blacklist: Provide a blacklist of Author Names as set() to filter out authors.
+    Returns:
+        A dict() containing the extracted metadata information or None.
+    """
+    # init
+    if author_blacklist is None:
+        author_blacklist = set()
+    elif isinstance(author_blacklist, list):
+        author_blacklist = set(author_blacklist)
+
     # load contents
     tree = load_html(filecontent)
     if tree is None:
-        return None
+        return {}
     # initialize dict and try to strip meta tags
     metadata = examine_meta(tree)
 
@@ -392,18 +417,16 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
                 metadata[field] = advance_fields[field]
             else:
                 metadata[field] = None
-
-    # author
-    if metadata['author'] is None or URL_COMP_CHECK.match(metadata['author']) or  metadata['author'] in BLACKLIST_AUTHOR:
+    if metadata['author'] is not None and len(author_blacklist) > 0:
+        metadata['author'] = check_authors(metadata['author'], author_blacklist)
+    if metadata['author'] is None or URL_COMP_CHECK.match(metadata['author']):
         metadata['author'] = extract_author(tree)
-
-    # correction: author not a name
-    if metadata['author'] is not None:
-        if metadata['author'].startswith('http'):
-            metadata['author'] = None
     # fix: try json-ld metadata and override
-    metadata = extract_json(tree, metadata)
-    # try with x-paths
+    try:
+        metadata = extract_meta_json(tree, metadata)
+    # todo: fix bugs in json_metadata.py
+    except TypeError as err:
+        LOGGER.warning('error in JSON metadata extraction: %s', err)
     # title
     if metadata['title'] is None:
         metadata['title'] = extract_title(tree)
@@ -415,16 +438,14 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
         metadata['hostname'] = extract_domain(metadata['url'])
     # extract date with external module htmldate
     if date_config is None:
-        date_config = HTMLDATE_CONFIG
+        # decide on fast mode HTMLDATE_CONFIG_EXTENSIVE, HTMLDATE_CONFIG_FAST
+        if fastmode is False:
+            date_config = HTMLDATE_CONFIG_EXTENSIVE
+        else:
+            date_config = HTMLDATE_CONFIG_FAST
     date_config['url'] = metadata['url']
-    try:
-        metadata['date'] = find_date(tree, **date_config)
-    # temporary fix for htmldate bug
-    except (UnicodeError, OverflowError) as e:
-        logging.warning('error in metadata date : '+str(e))
-    # sitename
-    if metadata['sitename'] is None:
-        metadata['sitename'] = extract_sitename(tree)
+    metadata['date'] = find_date(tree, **date_config)
+
     if metadata['sitename'] is not None:
         if metadata['sitename'].startswith('@'):
             # scrap Twitter ID
@@ -432,25 +453,46 @@ def extract_metadata(filecontent, default_url=None, date_config=None):
         # capitalize
         try:
             if not '.' in metadata['sitename'] and not metadata['sitename'][0].isupper():
+                # make every first char upper
                 metadata['sitename'] = metadata['sitename'].title()
         # fix for empty name
         except IndexError:
-            pass
-    else:
-        # use URL
-        if metadata['url']:
-            mymatch = re.match(r'https?://(?:www\.|w[0-9]+\.)?([^/]+)', metadata['url'])
-            if mymatch:
-                metadata['sitename'] = mymatch.group(1)
+            LOGGER.warning('sitename extraction error')
+            if metadata['url']:
+                url_link_match = re.match(r'https?://(?:www\.|w[0-9]+\.)?([^/]+)', metadata['url'])
+                if url_link_match:
+                    metadata['sitename'] = url_link_match.group(1)
+
+    elif metadata['url']:
+        url_link_match = re.match(r'https?://(?:www\.|w[0-9]+\.)?([^/]+)', metadata['url'])
+        if url_link_match:
+            metadata['sitename'] = url_link_match.group(1)
+
     # categories
     if not metadata['categories']:
         metadata['categories'] = extract_catstags('category', tree)
     # tags
     if not metadata['tags']:
         metadata['tags'] = extract_catstags('tags', tree)
-    # for safety: length check
-    for key, value in metadata.items():
-        if value is not None and len(value) > 10000:
-            metadata[key] = value[:9999] + '…'
-    # return
+    # license
+    metadata['license'] = extract_license(tree)
+    # safety checks
+
+    return clean_and_trim(metadata)
+
+
+def clean_and_trim(metadata):
+    'Limit text length and trim the attributes.'
+    for key in metadata.keys():
+        value = metadata[key]
+        if isinstance(value, str):
+            # length
+            if len(value) > 10000:
+                new_value = value[:9999] + '…'
+                metadata[key] = new_value
+
+            # HTML entities, remove spaces and control characters
+            value = line_processing(unescape(value))
+            metadata[key] = value
     return metadata
+
