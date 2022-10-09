@@ -48,7 +48,7 @@ def extract_meta_json(tree, metadata):
             schema = json.loads(element_text)
             metadata = extract_json(schema, metadata)
         except json.JSONDecodeError:
-            metadata = extract_json_parse_error(element_text, metadata)
+            metadata = extract_json_parse_error(elem, metadata)
 
         if criteria_fulfilled(metadata):
             break
