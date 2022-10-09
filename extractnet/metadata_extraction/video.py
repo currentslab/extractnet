@@ -1,7 +1,7 @@
 import json
 from bs4 import BeautifulSoup as bs 
 from xml.sax.saxutils import escape
-from .utils import parse_server_side_render, parse_ld_json, get_raw_html
+from .utils import get_raw_html
 
 YT_EMBED_URL = 'https://www.youtube.com/embed/'
 

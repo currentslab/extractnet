@@ -13,6 +13,7 @@ urls = [
 def test_hard_case():
     extractor = Extractor()
     for url in urls:
-        web = requests.get(url).content.decode('utf-8')
+        res = requests.get(url)
+        web = res.content.decode('utf-8')
         result = extractor(web, metadata_mining=True)
         assert '二十大' in result['title']

@@ -52,7 +52,7 @@ def extract_json(schema, metadata):
 
             elif content_type == "person":
                 if 'name' in content and content['name'] is not None and not content['name'].startswith('http'):
-                    metadata['name'] = normalize_authors(metadata['name'], content['name'])
+                    metadata['name'] = normalize_authors(metadata['name'] if 'name' in metadata else None, content['name'])
 
             elif content_type in JSON_ARTICLE_SCHEMA:
                 # author and person

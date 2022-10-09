@@ -8,7 +8,6 @@ under GNU GPL v3 license
 """
 
 
-from distutils.command.clean import clean
 import itertools
 import logging
 import re
