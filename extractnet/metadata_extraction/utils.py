@@ -23,7 +23,7 @@ from charset_normalizer import from_bytes
 from bs4 import BeautifulSoup as bs
 from .constant import (
     HTML_PARSER, RECOVERY_PARSER, SPLIT_TOKENS, NO_TAG_SPACE, SPACE_TRIMMING,
-    UNICODE_ALIASES, LINES_TRIMMING,
+    UNICODE_ALIASES, LINES_TRIMMING, CLEAN_META_TAGS,
     AUTHOR_EMAIL, AUTHOR_EMOJI_REMOVE, AUTHOR_PREFIX, AUTHOR_SPLIT,
     AUTHOR_REMOVE_SPECIAL, AUTHOR_REPLACE_JOIN, AUTHOR_REMOVE_NICKNAME, 
     AUTHOR_REMOVE_NUMBERS, AUTHOR_REMOVE_PREPOSITION, AUTHOR_TWITTER
@@ -283,3 +283,9 @@ def normalize_authors(current_authors, author_string):
     if len(new_authors) == 0:
         return current_authors
     return '; '.join(new_authors).strip('; ')
+
+
+def normalize_tags(tags):
+    '''Remove special characters of tags'''
+    tags = CLEAN_META_TAGS.sub(r'', trim(unescape(tags)))
+    return ", ".join(filter(None, tags.split(", ")))
