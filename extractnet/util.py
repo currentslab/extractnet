@@ -8,15 +8,15 @@ the article.
 """
 from __future__ import division
 import os
-import pkgutil
-
-import joblib
 from sklearn.pipeline import FeatureUnion, make_union
 import ftfy
-from .compat import model_path, range_, string_, PY2
+import dateparser
+
+from .compat import range_, string_
 from .features import get_feature
 from .sequence_tagger.models import NON_WORD_CHAR
-
+# for sanity check function
+from .metadata_extraction.url_utils import validate_date
 
 get_module_res = lambda *res: os.path.normpath(os.path.join(
     os.getcwd(), os.path.dirname(__file__), *res))
@@ -212,3 +212,16 @@ def priority_merge(x, main):
     z = x.copy()
     z.update(main)
     return z
+
+def attribute_sanity_check(content, **kwargs):
+    if 'date' in content:
+        date = content['date']
+        if isinstance(date, str):
+            content['date'] = dateparser.parse(date)
+
+    if 'url' in kwargs:
+        url = kwargs['url']
+        content['date'] = validate_date(url, content['date'])
+
+
+    return content

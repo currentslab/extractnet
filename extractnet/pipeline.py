@@ -6,7 +6,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from .metadata_extraction.metadata import extract_metadata
 
 from .compat import unicode_
-from .util import priority_merge, get_module_res, remove_empty_keys
+from .util import priority_merge, get_module_res, remove_empty_keys, attribute_sanity_check
 from .nn_models import NewsNet
 from .name_crf import AuthorExtraction
 from .nn_models import NewsNet
@@ -118,4 +118,8 @@ class Extractor(BaseEstimator, ClassifierMixin):
                 post_ml_results_ = pipeline(html, results)
                 results = priority_merge(post_ml_results_, results)
 
-        return results
+        sanity_check_params = {}
+        if 'url' in results:
+            sanity_check_params['url'] = results['url']
+            print(sanity_check_params)
+        return attribute_sanity_check(results, **sanity_check_params)
