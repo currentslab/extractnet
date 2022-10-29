@@ -121,5 +121,5 @@ class Extractor(BaseEstimator, ClassifierMixin):
         sanity_check_params = {}
         if 'url' in results:
             sanity_check_params['url'] = results['url']
-            print(sanity_check_params)
+
         return attribute_sanity_check(results, **sanity_check_params)

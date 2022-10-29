@@ -219,7 +219,7 @@ def attribute_sanity_check(content, **kwargs):
         if isinstance(date, str):
             content['date'] = dateparser.parse(date)
 
-    if 'url' in kwargs:
+    if 'url' in kwargs and 'date' in content:
         url = kwargs['url']
         content['date'] = validate_date(url, content['date'])
 

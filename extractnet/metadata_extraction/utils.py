@@ -28,6 +28,7 @@ from .constant import (
     AUTHOR_REMOVE_SPECIAL, AUTHOR_REPLACE_JOIN, AUTHOR_REMOVE_NICKNAME, 
     AUTHOR_REMOVE_NUMBERS, AUTHOR_REMOVE_PREPOSITION, AUTHOR_TWITTER
 )
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -149,7 +150,6 @@ def load_html(htmlobject, encoding='utf-8'):
     # further test: is it (well-formed) HTML at all?
     if tree is not None and check_flag is True:
         if len(tree) < 2:
-            LOGGER.error('parsed tree length: %s, wrong data type or not valid HTML', len(tree))
             tree = None
     #if tree is None:
     #    if isinstance(htmlobject, bytes) or isinstance(htmlobject, str):

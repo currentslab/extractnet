@@ -6,7 +6,7 @@ from .compat import str_cast
 from .util import get_and_union_features, get_module_res, fix_encoding
 from .blocks import TagCountReadabilityBlockifier
 
-
+EMPTY_HTML = "<article><p>content</p><p>blocked</p><p>404</p></article>"
 
 class NewsNet():
     '''
@@ -30,6 +30,10 @@ class NewsNet():
 
     def preprocess(self, html):
         blocks = TagCountReadabilityBlockifier.blockify(html, encoding='utf-8')
+        if len(blocks) == 0: # warning failed extraction
+            blocks = TagCountReadabilityBlockifier.blockify(EMPTY_HTML, encoding='utf-8')
+        elif len(blocks) < 3: # pad block
+            blocks = [blocks[0]]+blocks + [blocks[-1]]
         blocks = np.array(blocks)
         feat = self.feature_transform.transform(blocks).astype(np.float32)
         return feat, blocks

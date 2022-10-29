@@ -19,3 +19,9 @@ def test_readability_make_readability_features():
         expected_features = np.array(json.loads(fin.read()))
     assert np.allclose(actual_features.flatten(), expected_features, rtol=0.0005)
     assert actual_features.shape[1] == 1
+
+
+def test_default_features():
+    EMPTY_HTML = "<article><p>content</p><p>blocked</p><p>404</p></article>"
+    blks = TagCountReadabilityBlockifier.blockify(EMPTY_HTML)
+    print(blks)
