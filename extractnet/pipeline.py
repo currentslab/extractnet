@@ -53,7 +53,14 @@ class Extractor(BaseEstimator, ClassifierMixin):
     def __call__(self, html, **kwargs):
         return self.extract(html, **kwargs)
 
-    def extract(self, html, encoding=None, as_blocks=False, extract_target=None, debug=True, metadata_mining=True):
+    def extract(self, html, 
+        encoding=None, 
+        as_blocks=False,
+        extract_target=None, 
+        debug=False, 
+        metadata_mining=True, 
+        **kwargs):
+        
         if isinstance(html, (str, bytes, unicode_, np.unicode_)):
             documents_meta_data = {}
             if metadata_mining:
@@ -78,11 +85,11 @@ class Extractor(BaseEstimator, ClassifierMixin):
 
         output = self.content_extractor.predict(html)
         if isinstance(output, dict):
-            return self.postprocess(html, output, documents_meta_data)
+            return self.postprocess(html, output, documents_meta_data, **kwargs)
 
-        return [ self.postprocess(h, o, meta) for h, o, meta in zip(html, output, documents_meta_data)]
+        return [ self.postprocess(h, o, meta, **kwargs) for h, o, meta in zip(html, output, documents_meta_data)]
 
-    def postprocess(self, html, output, meta):
+    def postprocess(self, html, output, meta, **kwargs):
         results = {}
         if 'author' in output and len(output['author']) > 0:
             author_text, confidence = output['author'][0]
@@ -119,7 +126,9 @@ class Extractor(BaseEstimator, ClassifierMixin):
                 results = priority_merge(post_ml_results_, results)
 
         sanity_check_params = {}
-        if 'url' in results:
+        if 'url' in kwargs:
+            sanity_check_params['url'] = kwargs['url']
+        elif 'url' in results:
             sanity_check_params['url'] = results['url']
 
         return attribute_sanity_check(results, **sanity_check_params)
