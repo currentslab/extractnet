@@ -36,11 +36,13 @@ def extract_json(schema, metadata):
 
             if '@type' not in content:
                 continue
-            if isinstance(content["@type"], list):
+            if isinstance(content["@type"], list) and len(content["@type"]):
                 # some websites are using ['Person'] as type
                 content_type = content["@type"][0].lower()
-            else:
+            elif isinstance(content['@type'], str):
                 content_type = content["@type"].lower()
+            else:
+                continue
 
             if content_type in JSON_PUBLISHER_SCHEMA:
                 for candidate in ("name", "alternateName"):

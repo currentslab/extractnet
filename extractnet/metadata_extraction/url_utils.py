@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import re
 from urllib.parse import ParseResult, parse_qs, urlencode, urlparse
 from tld import get_tld
@@ -57,7 +58,10 @@ def date_updater(url_date_token, date):
 
     month = url_date_token[1]
     if month > 0 and month < 13 and date.month != month:
-        date = date.replace(month = month)
+        try:
+            date = date.replace(month=month)
+        except ValueError: # when month=2
+            pass
 
     day = url_date_token[2]
     if day > 0 and day < 32 and day != date.day:

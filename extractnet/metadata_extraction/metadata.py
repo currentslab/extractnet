@@ -31,7 +31,7 @@ from .constant import (
     TWITTER_ATTRS, METANAME_TAG, EXTRA_META, METANAME_TITLE
 )
 LOGGER = logging.getLogger(__name__)
-logging.getLogger('htmldate').setLevel(logging.WARNING)
+# logging.getLogger('htmldate').setLevel(logging.WARNING)
 
 
 def criteria_fulfilled(metadata):
@@ -298,8 +298,12 @@ def extract_author(tree):
             matches = tree.re_xpath("//*[re:match( text(), '{}' )]".format(text_author_pattern))
             if len(matches) > 0:
                 match_text = matches[0].text
-                author = re.search(text_author_pattern, match_text).group(0)
-                break
+                try:
+                    author = re.search(text_author_pattern, match_text).group(0)
+                except TypeError:
+                    continue
+                else:
+                    break
 
     return author
 
@@ -311,7 +315,9 @@ def extract_url(tree, default_url=None):
     url = default_url
     # try canonical link first
     element = tree.find('.//head//link[@rel="canonical"]')
-    if element is not None and URL_COMP_CHECK.match(element.attrib['href']):
+    if element is not None and \
+        'href' in element.attrib and \
+        URL_COMP_CHECK.match(element.attrib['href']):
         url = element.attrib['href']
     # try default language link
     else:
@@ -444,7 +450,10 @@ def extract_metadata(filecontent, default_url=None, date_config=None, fastmode=F
     date_config['url'] = metadata['url']
     metadata['date'] = find_date(tree, **date_config)
 
-    if metadata['sitename'] is not None:
+    if isinstance(metadata['sitename'], list):
+        metadata['sitename'] = metadata['sitename'][0]
+
+    if isinstance(metadata['sitename'], str):
         if metadata['sitename'].startswith('@'):
             # scrap Twitter ID
             metadata['sitename'] = re.sub(r'^@', '', metadata['sitename'])

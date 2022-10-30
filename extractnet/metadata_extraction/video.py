@@ -77,7 +77,10 @@ def get_advance_fields(raw_html):
         if speechkit.find('iframe'):            
             if audio_urls == None:
                 audio_urls = []
-            audio_urls.append(speechkit_audio(speechkit.find('iframe').get('src')))
+            try:
+                audio_urls.append(speechkit_audio(speechkit.find('iframe').get('src')))
+            except ValueError:
+                pass
 
     '''
         Video extraction

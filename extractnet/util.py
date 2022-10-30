@@ -177,7 +177,10 @@ def fix_encoding(text):
     if isinstance(text, str):
         text = ftfy.fix_text(ftfy.fix_encoding(text))
         if '\\u' in text:
-            text = text.encode().decode('unicode_escape')
+            try:
+                text = text.encode().decode('unicode_escape')
+            except UnicodeDecodeError as e:
+                return text
         return text
     elif isinstance(text, list):
         return [ ftfy.fix_text(ftfy.fix_encoding(t)) for t in text ]
