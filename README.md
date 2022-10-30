@@ -165,6 +165,18 @@ make
 
 However, you can try to build it 
 
+## Supress logging error
+
+Setting the level to critical will suppress any logging output 
+
+```python
+from extractnet import Extractor
+from extractnet.blocks import BlockifyError
+logging.getLogger('extractnet').setLevel(logging.CRITICAL)
+
+extractor = Extractor()
+```
+
 # More details about the code structure
 
 Coming soon
