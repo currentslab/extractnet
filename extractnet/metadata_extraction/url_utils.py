@@ -1,16 +1,17 @@
-from multiprocessing.sharedctypes import Value
 import re
+from datetime import datetime
 from urllib.parse import ParseResult, parse_qs, urlencode, urlparse
 from tld import get_tld
 
 NETLOC_RE = re.compile(r'(?<=\w):(?:80|443|8000|8080|5000)')
 TYPICAL = re.compile(r'/+')
 DOMAIN_PREFIX = re.compile(r'^www[0-9]*\.')
-
+# note
+FUTURE_YEAR = datetime.now().year + 1000
 URL_DATE = [
-    re.compile(r'(\d{4})\/(\d{1,2}|oct|jan|feb|mar|may|jun|jul|aug|sep|nov|dec|apr)\/(?:(\d{2})\/)'),
-    re.compile(r'(\d{4})\/(\d{1,2}|oct|jan|feb|mar|may|jun|jul|aug|sep|nov|dec|apr)\/'),
-    re.compile(r'(\d{4})-(\d{1,2}|oct|jan|feb|mar|may|jun|jul|aug|sep|nov|dec|apr)\/(?:(\d{2})\/)'),
+    re.compile(r'\/(\d{4})\/(\d{1,2}|oct|jan|feb|mar|may|jun|jul|aug|sep|nov|dec|apr)\/(?:(\d{2})\/)'),
+    re.compile(r'\/(\d{4})\/(\d{1,2}|oct|jan|feb|mar|may|jun|jul|aug|sep|nov|dec|apr)\/'),
+    re.compile(r'\/(\d{4})-(\d{1,2}|oct|jan|feb|mar|may|jun|jul|aug|sep|nov|dec|apr)\/(?:(\d{2})\/)'),
     re.compile(r'\/(\d{4})\/'),
 ]
 
@@ -53,7 +54,7 @@ def parse_url_date(token):
 def date_updater(url_date_token, date):
 
     year = url_date_token[0]
-    if year > 100 and date.year != year:
+    if year > 100 and date.year != year and year < FUTURE_YEAR:
         date = date.replace(year = year)
 
     month = url_date_token[1]
