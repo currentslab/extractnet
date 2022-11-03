@@ -138,7 +138,7 @@ setup(
         'scipy>=0.17.0',
         'sklearn-crfsuite==0.3.6',
         'dateparser==1.1.0',
-        'joblib>=1.2.0',
+        'joblib>=1.1.0',
         'htmldate==0.7.2'
     ]
 )
