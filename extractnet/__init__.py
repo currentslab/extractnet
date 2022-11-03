@@ -1,6 +1,6 @@
 from extractnet.pipeline import Extractor
 
-__version__ = '2.0.6'
+__version__ = '2.0.7'
 
 
 _LOADED_MODELS = {}
