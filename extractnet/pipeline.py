@@ -94,7 +94,7 @@ class Extractor(BaseEstimator, ClassifierMixin):
         if 'author' in output and len(output['author']) > 0:
             author_text, confidence = output['author'][0]
             results['rawAuthor'] = author_text
-            results['authorConfidence'] = confidence
+            results['authorConfidence'] = float(confidence)
             results['author'] = self.author_extractor(author_text)
         
         if 'date' in output and len(output['date']) > 0:

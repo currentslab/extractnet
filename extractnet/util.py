@@ -11,6 +11,7 @@ import os
 from sklearn.pipeline import FeatureUnion, make_union
 import ftfy
 import dateparser
+import regex # use by dateparser
 
 from .compat import range_, string_
 from .features import get_feature
@@ -217,10 +218,12 @@ def priority_merge(x, main):
     return z
 
 def attribute_sanity_check(content, **kwargs):
-    if 'date' in content:
+    if 'date' in content and isinstance(content['date'], str):
         date = content['date']
-        if isinstance(date, str):
+        try:
             content['date'] = dateparser.parse(date)
+        except regex._regex_core.error:
+            pass
 
     if 'url' in kwargs and 'date' in content:
         url = kwargs['url']
