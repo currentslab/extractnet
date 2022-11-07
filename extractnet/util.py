@@ -229,5 +229,8 @@ def attribute_sanity_check(content, **kwargs):
         url = kwargs['url']
         content['date'] = validate_date(url, content['date'])
 
+    if 'author' in content and isinstance(content['author'], list):
+        author_str = ','.join(content['author'])
+        content['author'] = author_str
 
     return content
