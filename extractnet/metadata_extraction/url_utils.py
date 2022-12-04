@@ -96,7 +96,10 @@ def extract_domain(url, blacklist=None):
     # invalid input OR domain TLD blacklist
     if tldinfo is None:
         return None
-    return DOMAIN_PREFIX.sub('', tldinfo.fld)
+    domain = DOMAIN_PREFIX.sub('', tldinfo.fld)
+    if isinstance(domain, str):
+        return domain.lower()
+    return domain
 
 
 def url_is_valid(url):
