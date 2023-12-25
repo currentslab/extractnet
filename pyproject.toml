@@ -1,0 +1,8 @@
+[build-system]
+requires = [
+    "setuptools",
+    "lxml",
+    "numpy",
+    "Cython>=0.21.1",
+]
+build_backend = "setuptools.build_meta"

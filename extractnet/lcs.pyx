@@ -13,7 +13,7 @@ cimport numpy as np
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport bool
-from compat import bytes_list_cast
+from .compat import bytes_list_cast
 
 cdef inline int int_max(int a, int b): return a if a >= b else b
 
@@ -70,7 +70,7 @@ def print_diff(X, Y):
                 diff.append("- " + X[i-1])
                 i -= 1
     diff.reverse()
-    print diff
+    print(diff)
 
 
 

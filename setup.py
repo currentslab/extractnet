@@ -125,10 +125,11 @@ setup(
     ext_modules=cythonize(ext_modules),
     setup_requires = [
         'lxml',
+        'numpy',
         'Cython>=0.21.1',
     ],
     install_requires=[
-        'cchardet >= 2.1.7',
+        'cchardet>=2.1.7',
         'beautifulsoup4==4.9.3',
         'ftfy>=4.1.0,<5.0.0',
         'numpy>=1.19.0',

@@ -29,7 +29,7 @@ import re
 import numpy as np
 import math
 
-from compat import str_list_cast, str_dict_cast, str_block_cast, str_block_list_cast, str_cast, bytes_cast
+from .compat import str_list_cast, str_dict_cast, str_block_cast, str_block_list_cast, str_cast, bytes_cast
 
 RE_HTML_ENCODING = re.compile(
     b'<\s*meta[^>]+charset\s*?=\s*?[\'"]?([^>]*?)[ /;\'">]',
